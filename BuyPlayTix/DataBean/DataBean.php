@@ -121,9 +121,6 @@ class DataBean implements \Iterator
     }
 
     public function __construct($param = "") {
-        if($this->log == null) {
-            $this->log = new BuyPlayTix_Log_PageLogger(get_class($this), \Monolog\Logger::ERROR);
-        }
         require_once 'BuyPlayTix/Db/Builder/' . strtolower($this->table) . ".php";
 
         if(!is_array($param) && ($databean = BuyPlayTix_Db_DataBean::load($param)) !== false) {

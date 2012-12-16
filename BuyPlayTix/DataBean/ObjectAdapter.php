@@ -2,16 +2,13 @@
 namespace BuyPlayTix\DataBean;
 class DataBeanObjectAdapter implements IAdapter {
 
-  private $log;
   private $beans = array();
   private $tables = array();
 
   public function __construct() {
-    $this->log = new \BuyPlayTix\Log\TestLogger(get_class($this), \Monolog\Logger::DEBUG);
   }
 
   function load($databean, $param = "") {
-    $this->log->debug("loadResult", array("class" => get_class($databean), "databean" => $databean, "param" => $param));
 
     if(!isset($this->beans[get_class($databean)])) {
       $this->beans[get_class($databean)] = array();
@@ -45,7 +42,6 @@ class DataBeanObjectAdapter implements IAdapter {
     return $databean;
   }
   function loadAll($databean, $field = "", $param = "", $andClause = "") {
-    $this->log->debug("loadAllResult", array("class" => get_class($databean), "databean" => $databean, "field" => $field, "param" => $param, "andClause" => "$andClause"));    
 
     if(strlen($field) > 0)
     {
@@ -107,9 +103,6 @@ class DataBeanObjectAdapter implements IAdapter {
       }
     }
     
-    // TODO: Handle order by and group by if necessary
-    $this->log->debug($clause, array("g" => $group_by, "o" => $order_by, "w" => $where));
-
     $databeans = Array();
     $b = $this->beans[get_class($databean)];
     foreach($b as $bean) {
@@ -137,7 +130,6 @@ class DataBeanObjectAdapter implements IAdapter {
     return $databeans;
   }
   function update($databean) {
-    $this->log->debug("updateResult", array("class" => get_class($databean), "databean" => $databean));
     if(!isset($this->beans[get_class($databean)])) {
       $this->beans[get_class($databean)] = array();
     }
@@ -146,7 +138,6 @@ class DataBeanObjectAdapter implements IAdapter {
     return $databean;
   }
   function delete($databean) {
-    $this->log->debug("deleteResult", array("class" => get_class($databean), "databean" => $databean));
     if(!isset($this->beans[get_class($databean)])) {
       $this->beans[get_class($databean)] = array();
     }
