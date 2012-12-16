@@ -50,7 +50,7 @@ class DataBean implements \Iterator
 
     protected $log;
 
-    protected static $adapterClass = "BuyPlayTix_Db_DataBeanDBAdapter";
+    protected static $adapterClass = '\BuyPlayTix\DataBean\DBAdapter';
 
     protected static $adapter;
 
@@ -69,51 +69,51 @@ class DataBean implements \Iterator
      * @access public
      */
     public static function setAdapter($adapter) {
-        BuyPlayTix_Db_DataBean::$adapter = $adapter;
+        DataBean::$adapter = $adapter;
     }
 
     public static function getAdapter() {
-        return BuyPlayTix_Db_DataBean::$adapter;
+        return DataBean::$adapter;
     }
 
     private static function cache($object) {
         $pk = $object->pk;
         if(!empty($object->$pk)) {
-            BuyPlayTix_Db_DataBean::$cache[$object->$pk] = $object;
+            DataBean::$cache[$object->$pk] = $object;
         }
     }
 
     private static function uncache($object) {
         $pk = $object->pk;
-        unset(BuyPlayTix_Db_DataBean::$cache[$object->$pk]);
+        unset(DataBean::$cache[$object->$pk]);
     }
 
 
     private static function load($pk) {
         $pk = trim($pk);
-        if(empty($pk) || !array_key_exists($pk, BuyPlayTix_Db_DataBean::$cache)) {
+        if(empty($pk) || !array_key_exists($pk, DataBean::$cache)) {
             return false;
         }
-        return BuyPlayTix_Db_DataBean::$cache[$pk];
+        return DataBean::$cache[$pk];
     }
     
     public function diff() {
-    	$cached_version = \BuyPlayTix_Db_Databean::load($this->fields[$this->pk]);
+    	$cached_version = Databean::load($this->fields[$this->pk]);
     	if(!$cached_version) {
     		return "";
     	}
     	$old_fields = $cached_version->fields;
     	$new_fields = $this->fields;
     	
-    	$diff = new \BuyPlayTix\Diff();
+    	$diff = new Diff();
     	$diff->diff($old_fields, $new_fields);
     	return $diff->__toString();
     }
 
     public function duplicate() {
-        BuyPlayTix_Db_DataBean::uncache($this);
+        DataBean::uncache($this);
          
-        $databean = BuyPlayTix_Db_DataBean::$adapter->duplicate($this);
+        $databean = DataBean::$adapter->duplicate($this);
         $this->fields = $databean->fields;
         $this->new = $databean->new;
         $this->whereClause = $databean->whereClause;
@@ -121,22 +121,25 @@ class DataBean implements \Iterator
     }
 
     public function __construct($param = "") {
+        if($this->log == null) {
+            $this->log = DB::$log;
+        }
         require_once 'BuyPlayTix/Db/Builder/' . strtolower($this->table) . ".php";
 
-        if(!is_array($param) && ($databean = BuyPlayTix_Db_DataBean::load($param)) !== false) {
+        if(!is_array($param) && ($databean = DataBean::load($param)) !== false) {
             $this->fields = $databean->fields;
             $this->new = $databean->new;
             $this->whereClause = $databean->whereClause;
             return $this;
         }
 
-        if(!BuyPlayTix_Db_DataBean::$adapter) {
-            BuyPlayTix_Db_DataBean::$adapter = new BuyPlayTix_Db_DataBean::$adapterClass();
+        if(!DataBean::$adapter) {
+            DataBean::$adapter = new DataBean::$adapterClass();
         }
-        BuyPlayTix_Db_DataBean::$adapter->load($this, $param);
+        DataBean::$adapter->load($this, $param);
         // we don't want to cache new objects until we've saved
         if(!$this->isNew()) {
-            BuyPlayTix_Db_DataBean::cache($this);
+            DataBean::cache($this);
         }
         return $this;
     }
@@ -160,7 +163,7 @@ class DataBean implements \Iterator
      */
     function getDatabeans($field = "", $param = "", $andClause = "")
     {
-        return BuyPlayTix_Db_DataBean::$adapter->loadAll($this, $field, $param, $andClause);
+        return DataBean::$adapter->loadAll($this, $field, $param, $andClause);
     }
     /**
      * Gets a value
@@ -235,8 +238,8 @@ class DataBean implements \Iterator
      */
     function delete()
     {
-        BuyPlayTix_Db_DataBean::$adapter->delete($this);
-        BuyPlayTix_Db_DataBean::uncache($this);
+        DataBean::$adapter->delete($this);
+        DataBean::uncache($this);
     }
     /**
      * Updates this object
@@ -248,8 +251,8 @@ class DataBean implements \Iterator
      */
     function update()
     {
-        $result = BuyPlayTix_Db_DataBean::$adapter->update($this);
-        BuyPlayTix_Db_DataBean::cache($this);
+        $result = DataBean::$adapter->update($this);
+        DataBean::cache($this);
         return $result;
     }
 
@@ -339,7 +342,7 @@ class DataBean implements \Iterator
     }
     
     public function setPk($uuid) {
-      $db = BuyPlayTix_Db_Database::getInstance();
+      $db = Database::getInstance();
       $this->fields[$this->getPk()] = $uuid;
       $this->setWhereClause('where ' . $this->getPk() . ' = ' . $db->quote($uuid));
     }

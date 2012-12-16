@@ -30,13 +30,13 @@ class NullDB {
 
 
   public static function getInstance($class = "deprecated") {
-    if(!isset(\BuyPlayTix_Db_Database::$instance)) {
-      \BuyPlayTix_Db_Database::$instance = new NullDatabase();
+    if(!isset(\Database::$instance)) {
+      \Database::$instance = new NullDatabase();
     }
-    return \BuyPlayTix_Db_Database::$instance;
+    return \Database::$instance;
   }
   public static function setInstance($instance) {
-    \BuyPlayTix_Db_Database::$instance = $instance;
+    \Database::$instance = $instance;
   }
   function connect()
   {

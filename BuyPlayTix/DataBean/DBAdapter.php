@@ -4,7 +4,7 @@ class DBAdapter implements IAdapter {
 
   function load($databean, $param = "") {
     try {
-      $db = BuyPlayTix_Db_Database::getInstance($databean->connectionString);
+      $db = DB::getInstance($databean->connectionString);
 
       if(is_array($param))
       {
@@ -18,7 +18,7 @@ class DBAdapter implements IAdapter {
       }
       else
       {
-        $uuid = BuyPlayTix_UUID::get();
+        $uuid = UUID::get();
         $databean->fields[$databean->getPk()] = $uuid;
         $databean->setWhereClause('where ' . $databean->getPk() . ' = ' . $db->quote($uuid));
         return;
@@ -32,22 +32,22 @@ class DBAdapter implements IAdapter {
         $databean->setNew(false);
       } else {
         // we need to make sure a UID is assigned if we don't return a record from the database
-        $uuid = BuyPlayTix_UUID::get();
+        $uuid = UUID::get();
         $databean->fields[$databean->getPk()] = $uuid;
         $databean->setWhereClause('where ' . $databean->getPk() . ' = ' . $db->quote($uuid));
         $databean->setNew(true);
       }
     }
-    catch (Exception $e) {
-      throw new BuyPlayTix_Db_DatabaseException("Unable to instantiate databean " . __CLASS__ . ": " . $e);
+    catch (\Exception $e) {
+      throw new Exception("Unable to instantiate databean " . __CLASS__ . ": " . $e);
     }
   }
 
   function duplicate($databean) {
-    $db = BuyPlayTix_Db_Database::getInstance($databean->connectionString);
+    $db = DB::getInstance($databean->connectionString);
 
     $databean->setNew(true);
-    $uuid = BuyPlayTix_UUID::get();
+    $uuid = UUID::get();
     $databean->fields[$databean->getPk()] = $uuid;
     $databean->setWhereClause('where ' . $databean->getPk() . ' = ' . $db->quote($uuid));
     return $databean;
@@ -56,7 +56,7 @@ class DBAdapter implements IAdapter {
   function loadAll($databean, $field = "", $param = "", $andClause = "") {
     $sql = "";
     try {
-      $db = BuyPlayTix_Db_Database::getInstance($databean->connectionString);
+      $db = DB::getInstance($databean->connectionString);
 
       if(strlen($field) > 0)
       {
@@ -92,14 +92,14 @@ class DBAdapter implements IAdapter {
       }
       return $databeans;
     }
-    catch (Exception $e) {
-      throw new BuyPlayTix_Db_DatabaseException("Unable to return all " . $databean->getTable() . " databeans: " . $e->getMessage() . ": $sql");
+    catch (\Exception $e) {
+      throw new Exception("Unable to return all " . $databean->getTable() . " databeans: " . $e->getMessage() . ": $sql");
     }
   }
 
   function update($databean) {
     try {
-      $db = BuyPlayTix_Db_Database::getInstance($databean->connectionString);
+      $db = DB::getInstance($databean->connectionString);
 
 
       $fieldList = "";
@@ -133,14 +133,14 @@ class DBAdapter implements IAdapter {
       }
       return $db->executeSql($sql);
     }
-    catch (Exception $e) {
-      throw new BuyPlayTix_Db_DatabaseException("Unable to update object: " . $e);
+    catch (\Exception $e) {
+      throw new Exception("Unable to update object: " . $e);
     }
 
   }
   function delete($databean) {
     try {
-      $db = BuyPlayTix_Db_Database::getInstance($databean->connectionString);
+      $db = DB::getInstance($databean->connectionString);
 
       $sql = "delete
       from " . $databean->getTable() . "
@@ -148,8 +148,8 @@ class DBAdapter implements IAdapter {
 
       return $db->query($sql);
     }
-    catch (Exception $e) {
-      throw new BuyPlayTix_Db_DatabaseException("Unable to delete object: " . $e);
+    catch (\Exception $e) {
+      throw new Exception("Unable to delete object: " . $e);
     }
   }
 
@@ -160,7 +160,7 @@ class DBAdapter implements IAdapter {
 
   function raw_delete($table, $fields = array()) {
 
-    $db = BuyPlayTix_Db_Database::getInstance();
+    $db = DB::getInstance();
 
     $restrictions = array();
     $values = array();
@@ -184,7 +184,7 @@ class DBAdapter implements IAdapter {
   }
   function raw_insert($table, $insert_fields = array()) {
 
-    $db = BuyPlayTix_Db_Database::getInstance();
+    $db = DB::getInstance();
 
     $fields = array();
     $values = array();
@@ -202,7 +202,7 @@ class DBAdapter implements IAdapter {
   }
   function raw_update($table, $fields = array(), $where_fields = array()) {
 
-    $db = BuyPlayTix_Db_Database::getInstance();
+    $db = DB::getInstance();
 
     $values = array();
     $set_clauses = array();
@@ -232,7 +232,7 @@ class DBAdapter implements IAdapter {
 
   function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL) {
 
-    $db = BuyPlayTix_Db_Database::getInstance();
+    $db = DB::getInstance();
 
     $values = array();
     $where_clause = "";
@@ -267,7 +267,7 @@ class DBAdapter implements IAdapter {
 
   private static $statement_cache = array();
   function named_query($name, $sql = "", $params = array(), $hash = true) {
-    $db = BuyPlayTix_Db_Database::getInstance();
+    $db = DB::getInstance();
 
     $sth = NULL;
     if(isset($statement_cache[$name])) {

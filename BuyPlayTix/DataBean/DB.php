@@ -6,7 +6,7 @@ class DB {
    * @var object
    * @see Database()
    */
-  private static $log;
+  public static $log;
 
   public static $instance;
 
@@ -44,19 +44,19 @@ class DB {
     DB::$log = $logger;
   }
   public static function getInstance($class = "deprecated") {
-    if(!isset(BuyPlayTix_Db_Database::$instance)) {
-      BuyPlayTix_Db_Database::$instance = new BuyPlayTix_Db_Database();
+    if(!isset(DB::$instance)) {
+      DB::$instance = new DB();
     }
-    return BuyPlayTix_Db_Database::$instance;
+    return DB::$instance;
   }
   public static function setInstance($instance) {
-    BuyPlayTix_Db_Database::$instance = $instance;
+    DB::$instance = $instance;
   }
   function connect()
   {
     $dsn = 'mysql:dbname=' . DB::$name . ";host=" . DB::$host;
-    $this->database = new PDO($dsn, DB::$user, DB::$pass, array(PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'utf8\''));
-    $this->database->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $this->database = new \PDO($dsn, DB::$user, DB::$pass, array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'utf8\''));
+    $this->database->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
     $this->database->exec("set names 'utf8'");
   }
   public function setTimeZone($tz) {
@@ -73,15 +73,15 @@ class DB {
   }
   function fetchArray($result)
   {
-    return $result->fetch(PDO::FETCH_NUM);
+    return $result->fetch(\PDO::FETCH_NUM);
   }
   function fetchAssocArray($result)
   {
-    return $result->fetch(PDO::FETCH_ASSOC);
+    return $result->fetch(\PDO::FETCH_ASSOC);
   }
   function fetchObject($result)
   {
-    return $result->fetch(PDO::FETCH_OBJ);
+    return $result->fetch(\PDO::FETCH_OBJ);
   }
   function quote($string)
   {

@@ -219,7 +219,7 @@ class DataBeanObjectAdapter implements IAdapter {
         }
       }
       if($found_match) {
-        throw new BuyPlayTix_Db_DatabaseException("Unique constraint failure.");
+        throw new DatabaseException("Unique constraint failure.");
       }
     }
     $this->tables[$table][] = $fields;
