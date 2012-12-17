@@ -18,10 +18,6 @@ class NullDB extends DB {
 
   public static function init($options) {
   }
-  public static function setLogger($logger) {
-  }
-
-
   public static function getInstance($class = "deprecated") {
     if(!isset(DB::$instance)) {
       DB::$instance = new NullDB();
