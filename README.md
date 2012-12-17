@@ -12,7 +12,7 @@ Setup is simple
         "name" => $database_name,
         "host" => $database_host,
     ));
-    // (optional) pass in a Monolog(https://github.com/Seldaek/monolog) logger
+    // (optional) pass in a logger that implements IDBLogger
     \BuyPlayTix\DataBean\DB::setLogger($logger);
 
 
@@ -73,10 +73,34 @@ Why would you want to do this rather than directly running against the database?
     raw_delete("MESSAGES", array("OWNER_UID => $owner_uid));
     
     // complex query
-    $results = named_query("MESSAGES_BY_HOUR", "select count(*) from MESSAGES group by date_form(INSERT_TIMESTAMP, '%H')");
+    $results = named_query("MESSAGES_BY_HOUR", "select date_format(INSERT_TIMESTAMP, '%H'), count(*) from MESSAGES group by date_format(INSERT_TIMESTAMP, '%H')");
     
 Testing
 -------
 
 ### Setting up a Test ###
 
+    \BuyPlayTix\DataBean\DB::setInstance(\BuyPlayTix\DataBean\NullDB::getInstance());
+    \BuyPlayTix\DataBean\DataBean::setAdapter(new \BuyPlayTix\DataBean\ObjectAdapter());
+
+### A Simple Test ###
+
+    $message = new Message();
+    $message->SUBJECT = "A Test Message";
+    $message->update();
+    
+    assertEquals(1, Message::getObjects("SUBJECT", array("A Test Message"));
+    
+### A More Complex Test ###
+Let's say that we want to test the method get_queries_by_hour defined like this on our message databean:
+
+    function get_queries_by_hour() {
+      return named_query("MESSAGES_BY_HOUR", "select date_format(INSERT_TIMESTAMP, '%H'), count(*) from MESSAGES group by date_format(INSERT_TIMESTAMP, '%H')");
+    }
+    
+
+    $adapter = \BuyPlayTix\DataBean\DataBean::getAdapter();
+    $adapter->set_named_query_value("MESSAGES_BY_HOUR", array(array("1", 200), array("2", 300));
+    $results = $message->get_queries_by_hour();
+    assertEquals(2, count($results));
+    
