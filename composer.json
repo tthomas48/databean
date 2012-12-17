@@ -6,7 +6,7 @@
     "license": "Apache-2.0",
     "require": {
       "php": ">=5.3.2",
-      "ext-uuid": "*",
+      "ext-uuid": "*"
     },
     "autoload": {
       "psr-0": {"BuyPlayTix": "./"}
