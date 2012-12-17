@@ -40,7 +40,7 @@ class DB {
     DB::$name = $options["name"];
     DB::$host = $options["host"];
   }
-  public static function setLogger($logger) {
+  public static function setLogger(IDBLogger $logger) {
     DB::$log = $logger;
   }
   public static function getInstance($class = "deprecated") {
@@ -58,6 +58,9 @@ class DB {
     $this->database = new \PDO($dsn, DB::$user, DB::$pass, array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'utf8\''));
     $this->database->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
     $this->database->exec("set names 'utf8'");
+    if(DB::$log == null) {
+      DB::$log = new NullLogger();
+    }
   }
   public function setTimeZone($tz) {
   	// set timezone to UTC
