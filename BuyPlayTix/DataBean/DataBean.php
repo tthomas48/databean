@@ -161,7 +161,7 @@ class DataBean implements \Iterator
      * @return array BuyPlayTix_Db_DataBeans
      * @access public
      */
-    function getDatabeans($field = "", $param = "", $andClause = "")
+    function getDataBeans($field = "", $param = "", $andClause = "")
     {
         return DataBean::$adapter->loadAll($this, $field, $param, $andClause);
     }
