@@ -33,6 +33,9 @@ class NullDB extends DB {
   }
   function connect()
   {
+    if(DB::$log == null) {
+      DB::$log = new NullLogger();
+    }
   }
   function query($sql)
   {
