@@ -219,7 +219,7 @@ class DataBeanObjectAdapter implements IAdapter {
         }
       }
       if($found_match) {
-        throw new DatabaseException("Unique constraint failure.");
+        throw new Exception("Unique constraint failure.");
       }
     }
     $this->tables[$table][] = $fields;

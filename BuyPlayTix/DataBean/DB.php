@@ -4,7 +4,7 @@ class DB {
   /**
    * contains the log to use for logging
    * @var object
-   * @see Database()
+   * @see DB()
    */
   public static $log;
 

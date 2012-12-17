@@ -2,13 +2,6 @@
 namespace BuyPlayTix\DataBean;
 class NullDB {
   /**
-   * contains the log to use for logging
-   * @var object
-   * @see Database()
-   */
-  private $log;
-
-  /**
    * Creates a new database instance
    *
    * A new database instance is created.
@@ -30,13 +23,13 @@ class NullDB {
 
 
   public static function getInstance($class = "deprecated") {
-    if(!isset(\Database::$instance)) {
-      \Database::$instance = new NullDatabase();
+    if(!isset(\DB::$instance)) {
+      \DB::$instance = new NullDB();
     }
-    return \Database::$instance;
+    return \DB::$instance;
   }
   public static function setInstance($instance) {
-    \Database::$instance = $instance;
+    \DB::$instance = $instance;
   }
   function connect()
   {

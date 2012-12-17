@@ -342,7 +342,7 @@ class DataBean implements \Iterator
     }
     
     public function setPk($uuid) {
-      $db = Database::getInstance();
+      $db = DB::getInstance();
       $this->fields[$this->getPk()] = $uuid;
       $this->setWhereClause('where ' . $this->getPk() . ' = ' . $db->quote($uuid));
     }
