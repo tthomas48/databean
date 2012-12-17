@@ -337,7 +337,7 @@ class DataBean implements \Iterator
     public function __clone() {
     	 
     	$this->setNew(true);
-    	$uuid = \BuyPlayTix_UUID::get();
+    	$uuid = UUID::get();
       $this->setPk($uuid);
     }
     

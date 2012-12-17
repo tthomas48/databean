@@ -1,6 +1,6 @@
 <?php
 namespace BuyPlayTix\DataBean;
-class DataBeanObjectAdapter implements IAdapter {
+class ObjectAdapter implements IAdapter {
 
   private $beans = array();
   private $tables = array();
@@ -36,7 +36,7 @@ class DataBeanObjectAdapter implements IAdapter {
         }
       }
     }
-    $uuid = \BuyPlayTix_UUID::get();
+    $uuid = UUID::get();
     $databean->fields[$databean->getPk()] = $uuid;
     $databean->setNew(true);
     return $databean;
@@ -151,7 +151,7 @@ class DataBeanObjectAdapter implements IAdapter {
     if($pk_value != NULL) {
       return $pk_value;
     }
-    return \BuyPlayTix_UUID::get();
+    return UUID::get();
   }
 
   function raw_delete($table, $where_fields = array()) {
@@ -347,13 +347,13 @@ class DataBeanObjectAdapter implements IAdapter {
 
   private static $named_query_values = array();
   public function set_named_query_value($name, $value) {
-    DataBeanObjectAdapter::$named_query_values[$name] = $value;
+    ObjectAdapter::$named_query_values[$name] = $value;
   }
   function named_query($name, $sql = "", $params = array(), $hash = true) {
-    if(!isset(DataBeanObjectAdapter::$named_query_values[$name])) {
+    if(!isset(ObjectAdapter::$named_query_values[$name])) {
       throw new \Exception("No value set for named query: " . $name);
     }
-    return DataBeanObjectAdapter::$named_query_values[$name];
+    return ObjectAdapter::$named_query_values[$name];
   }
   private function _parseList($param= Array())
   {

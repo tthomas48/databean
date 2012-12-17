@@ -1,6 +1,6 @@
 <?php
 namespace BuyPlayTix\DataBean;
-class NullDB {
+class NullDB extends DB {
   /**
    * Creates a new database instance
    *
@@ -23,10 +23,10 @@ class NullDB {
 
 
   public static function getInstance($class = "deprecated") {
-    if(!isset(\DB::$instance)) {
-      \DB::$instance = new NullDB();
+    if(!isset(DB::$instance)) {
+      DB::$instance = new NullDB();
     }
-    return \DB::$instance;
+    return DB::$instance;
   }
   public static function setInstance($instance) {
     \DB::$instance = $instance;

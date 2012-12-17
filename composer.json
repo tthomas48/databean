@@ -1,6 +1,8 @@
 {
     "name": "buyplaytix/databean",
     "version": "0.1",
+    "description": "DataBean is a simple and testable database access layer for PHP.",
+    "type": "library",
     "autoload": {
       "psr-0": {"BuyPlayTix": "./"}
     }
