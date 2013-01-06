@@ -124,7 +124,7 @@ class DataBean implements \Iterator
         if($this->log == null) {
             $this->log = DB::$log;
         }
-        require_once 'BuyPlayTix/Db/Builder/' . strtolower($this->table) . ".php";
+        include_once 'BuyPlayTix/DataBean/Builder/' . strtolower($this->table) . ".php";
 
         if(!is_array($param) && ($databean = DataBean::load($param)) !== false) {
             $this->fields = $databean->fields;

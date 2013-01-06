@@ -18,6 +18,7 @@ class DB {
   private static $pass;
   private static $name;
   private static $host;
+  private static $dsn;
 
 
   /**
@@ -39,6 +40,9 @@ class DB {
     DB::$pass = $options["pass"];
     DB::$name = $options["name"];
     DB::$host = $options["host"];
+    if(array_key_exists("dsn", $options)) {
+      DB::$dsn = $options["dsn"];
+    }
   }
   public static function setLogger(IDBLogger $logger) {
     DB::$log = $logger;
@@ -54,8 +58,10 @@ class DB {
   }
   function connect()
   {
-    $dsn = 'mysql:dbname=' . DB::$name . ";host=" . DB::$host;
-    $this->database = new \PDO($dsn, DB::$user, DB::$pass, array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'utf8\''));
+    if(empty(DB::$dsn)) {
+      DB::$dsn = 'mysql:dbname=' . DB::$name . ";host=" . DB::$host;
+    }
+    $this->database = new \PDO(DB::$dsn, DB::$user, DB::$pass, array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'utf8\''));
     $this->database->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
     $this->database->exec("set names 'utf8'");
     if(DB::$log == null) {

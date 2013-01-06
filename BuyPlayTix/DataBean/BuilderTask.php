@@ -8,7 +8,9 @@ class BuilderTask extends Task {
 	protected $userid;
 	protected $password;
 	protected $outputdir;
-	protected $dbh;
+	protected $dbname;
+	protected $dbhost;
+        protected $classpath;
 
 	/**
 	 * Nested creator, creates a FileSet for this task
@@ -44,11 +46,16 @@ class BuilderTask extends Task {
 		$this->outputdir = $outputdir;
 		@mkdir($this->outputdir);
 	}
-	
+    
+        public function setClasspath($classpath) {
+                $this->classpath = $classpath;
+        }
+
 	/**
 	 * The init method: Do init steps.
 	 */
 	public function init() {
+
     
 	}
 
@@ -59,6 +66,14 @@ class BuilderTask extends Task {
 		if(!isset($this->file) and count($this->filesets) == 0) {
 			throw new BuildException("Missing either a nested fileset or attribute 'file' set");
 		}
+
+                // init the database
+	        \BuyPlayTix\DataBean\DB::init(array(
+	            "user" => $this->userid,
+	            "pass" => $this->password,
+	            "dsn" => $this->url,
+	        ));
+
 		
 		$this->dbh = new PDO($this->url, $this->userid, $this->password);
 
@@ -83,6 +98,9 @@ class BuilderTask extends Task {
 		
 	}
 	private function build() {
+                if(!empty($this->classpath)) {
+                  ini_set("include_path", $this->classpath);
+                }
 		
 		
 		$classes = get_declared_classes();
@@ -90,7 +108,7 @@ class BuilderTask extends Task {
 			$rc = new ReflectionClass($class);
 			if($rc->isSubclassOf("\BuyPlayTix\DataBean\DataBean")) {
 				if($rc->hasProperty("table")) {
-					$instance = $rc->newInstance();
+                                        $instance = $rc->newInstance();
 					$table_property = $rc->getProperty("table");
 					$table_property->setAccessible(true);
 					$this->processTable($class, $table_property->getValue($instance));
