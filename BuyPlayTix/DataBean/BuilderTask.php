@@ -111,7 +111,10 @@ class BuilderTask extends Task {
                                         $instance = $rc->newInstance();
 					$table_property = $rc->getProperty("table");
 					$table_property->setAccessible(true);
-					$this->processTable($class, $table_property->getValue($instance));
+					$table_name = $table_property->getValue($instance);
+					if(!empty($table_name)) {
+	    					$this->processTable($class, $table_property->getValue($instance));
+					}
 				}
 			}
 		}
