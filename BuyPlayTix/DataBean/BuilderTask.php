@@ -129,11 +129,11 @@ class BuilderTask extends Task {
                 $output .= "namespace BuyPlayTix\DataBean\Builder;\n";
                 $output .= "trait " . strtolower($table) . "_trait { \n\n";
                 foreach($fields as $field) {
-			$output .= "    public function get_" . strtolower($field["Field"]) . "() {";
+			$output .= "    public function get_" . strtolower($field["Field"]) . "() {\n";
 			$output .= "        return \$this->" . $field["Field"] . ";\n";
 			$output .= "    }\n\n";
 
-			$output .= "    public function set_" . strtolower($field["Field"]) . "(\$v) {";
+			$output .= "    public function set_" . strtolower($field["Field"]) . "(\$v) {\n";
 			$output .= "        return \$this->" . $field["Field"] . " = \$v;\n";
 			$output .= "    }\n\n";
                 }
