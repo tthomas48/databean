@@ -139,7 +139,7 @@ class BuilderTask extends Task {
                 }
                 $output .= "}\n";
 
-		$path = $this->outputdir . strtolower($table) . ".php";
+		$path = $this->outputdir . strtolower($table) . "_trait.php";
 		file_put_contents($path, $output);
 	}
 }
