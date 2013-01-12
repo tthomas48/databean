@@ -128,6 +128,7 @@ class BuilderTask extends Task {
 		$output = '<?p' . "hp\n";
                 $output .= "namespace BuyPlayTix\DataBean\Builder;\n";
                 $output .= "trait " . strtolower($table) . "_trait { \n\n";
+
                 foreach($fields as $field) {
 			$output .= "    public function get_" . strtolower($field["Field"]) . "() {\n";
 			$output .= "        return \$this->" . $field["Field"] . ";\n";

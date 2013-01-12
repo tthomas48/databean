@@ -127,7 +127,7 @@ class DataBean implements \Iterator
         if(empty($this->table)) {
             throw new Exception("No table specified for DataBean " . get_called_class() . ".");
         }
-        include_once 'BuyPlayTix/DataBean/Builder/' . strtolower($this->table) . ".php";
+        #include_once 'BuyPlayTix/DataBean/Builder/' . strtolower($this->table) . ".php";
 
         if(!is_array($param) && ($databean = DataBean::load($param)) !== false) {
             $this->fields = $databean->fields;
