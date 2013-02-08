@@ -120,7 +120,7 @@ class DataBean implements \Iterator
         return $this;
     }
 
-    public function __construct($param = "") {
+    public function __construct($param = "", $reload = false) {
         if($this->log == null) {
             $this->log = DB::$log;
         }
@@ -129,7 +129,7 @@ class DataBean implements \Iterator
         }
         #include_once 'BuyPlayTix/DataBean/Builder/' . strtolower($this->table) . ".php";
 
-        if(!is_array($param) && ($databean = DataBean::load($param)) !== false) {
+        if(!$reload && !is_array($param) && ($databean = DataBean::load($param)) !== false) {
             $this->fields = $databean->fields;
             $this->new = $databean->new;
             $this->whereClause = $databean->whereClause;
