@@ -2,6 +2,7 @@
 namespace BuyPlayTix\DataBean;
 class DataBean implements \Iterator
 {
+    public static $CACHE = true;
     private static $cache = Array();
     /**
      * associate array containing fields and values for this table
@@ -77,6 +78,9 @@ class DataBean implements \Iterator
     }
 
     private static function cache($object) {
+        if(!DataBean::$CACHE) {
+	    return;
+        }
         $pk = $object->pk;
         if(!empty($object->$pk)) {
             DataBean::$cache[$object->$pk] = $object;
@@ -90,6 +94,10 @@ class DataBean implements \Iterator
 
 
     private static function load($pk) {
+        if(!DataBean::$CACHE) {
+	    return false;
+        }
+
         $pk = trim($pk);
         if(empty($pk) || !array_key_exists($pk, DataBean::$cache)) {
             return false;
