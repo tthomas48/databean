@@ -9,7 +9,7 @@ interface IAdapter {
 	function raw_delete($table, $fields = array());
 	function raw_insert($table, $fields = array());
 	function raw_update($table, $fields = array(), $where_fields = array());
-	function raw_select($table, $fields = array(), $cast_class = NULL);
+	function raw_select($table, $fields = array(), $cast_class = NULL, $order = array(), $group = array());
 	function named_query($name, $sql = "", $params = array(), $hash = true);
 }
 ?>

@@ -230,7 +230,7 @@ class DBAdapter implements IAdapter {
 
   }
 
-  function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL) {
+  function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL, $order = array(), $group = array()) {
 
     $db = DB::getInstance();
 
@@ -246,7 +246,7 @@ class DBAdapter implements IAdapter {
       $where_clause[] = $name . " $condition ? ";
       $values[] = $value;
     }
-    $sql = "SELECT " . implode(",", $fields) . " FROM " . $table . " WHERE " . implode(" AND ", $where_clause);
+    $sql = "SELECT " . implode(",", $fields) . " FROM " . $table . " WHERE " . implode(" AND ", $where_clause) . (count($order) ? ' ORDER BY ' . implode(",", $order) : '') . (count($group) ? ' GROUP BY ' . implode(",", $group) : '');
     $sth = $db->prepare($sql);
     $result = $db->execute($sth, $values);
 

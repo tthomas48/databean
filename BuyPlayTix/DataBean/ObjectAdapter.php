@@ -224,7 +224,8 @@ class ObjectAdapter implements IAdapter {
     }
     $this->tables[$table][] = $fields;
   }
-  function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL) {
+  // TODO: Add order and grouping
+  function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL, $order = array(), $group = array()) {
     if(!isset($this->tables[$table])) {
       $this->tables[$table] = array();
     }
