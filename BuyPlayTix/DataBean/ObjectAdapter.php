@@ -224,7 +224,7 @@ class ObjectAdapter implements IAdapter {
     }
     $this->tables[$table][] = $fields;
   }
-  // TODO: Add order and grouping
+  // TODO: Add order and grouping, aggregate
   function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL, $order = array(), $group = array()) {
     if(!isset($this->tables[$table])) {
       $this->tables[$table] = array();
@@ -278,8 +278,39 @@ class ObjectAdapter implements IAdapter {
           $results[] = $cast_class($row[0]);
         } else {
           $ret_row = array();
+          
+          $aggregation = array();
           foreach($fields as $field) {
-            $ret_row[$field] = $row[$field];
+            if(is_array($field)) {
+             $field_name = $field['name'];
+             $field_alias = $field['alias'];
+             if(empty($field_alias)) {
+              $field_alias = $field_name;
+             }
+             switch($field['aggregation']) {
+              case 'count':
+               if(isset($aggregation[$field_alias])) {
+                $aggregation[$field_alias] = $aggregation[$field_alias]++;
+                break;
+               }
+               $aggregation[$field_alias] = 1;
+               break;
+              case 'sum':
+               if(isset($aggregation[$field_alias])) {
+                $aggregation[$field_alias] = $aggregation[$field_alias] += $row[$field_name];
+                break;
+               }
+               $aggregation[$field_alias] = $row[$field_name];
+               break;
+              default:
+               throw new \Exception("Unknown aggregation type for field $field_name.");
+             }
+            } else {
+             $ret_row[$field] = $row[$field];
+            }
+          }
+          foreach($aggregation as $field_name => $field_value) {
+           $ret_row[$field_name] = $field_value;
           }
           $results[] = $ret_row;
         }

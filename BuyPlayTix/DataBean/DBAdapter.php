@@ -190,15 +190,15 @@ class DBAdapter implements IAdapter {
     $values = array();
     foreach($insert_fields as $name => $value) {
       $fields[] = $name;
-      $values[] = $db->quote($value);
+      $placeholders[] = "?";
+      $values[] = $value;
     }
 
     $sql = "insert
     into " . $table . "
-    (" . implode(',', $fields) . ") values (" . implode(',', $values) . ")";
-    return $db->query($sql);
-
-
+    (" . implode(',', $fields) . ") values (" . implode(',', $placeholders) . ")";
+    $sth = $db->prepare($sql);
+    return $db->execute($sth, $values);
   }
   function raw_update($table, $fields = array(), $where_fields = array()) {
 
@@ -235,7 +235,7 @@ class DBAdapter implements IAdapter {
     $db = DB::getInstance();
 
     $values = array();
-    $where_clause = "";
+    $where_clause = array();
     foreach($where_fields as $name => $v) {
       $condition = '=';
       $value = $v;
@@ -246,7 +246,30 @@ class DBAdapter implements IAdapter {
       $where_clause[] = $name . " $condition ? ";
       $values[] = $value;
     }
-    $sql = "SELECT " . implode(",", $fields) . " FROM " . $table . " WHERE " . implode(" AND ", $where_clause) . (count($order) ? ' ORDER BY ' . implode(",", $order) : '') . (count($group) ? ' GROUP BY ' . implode(",", $group) : '');
+    $formatted_fields = array();
+    foreach($fields as $field) {
+      if(is_array($field)) {
+       $field_name = $field['name'];
+       $field_alias = $field['alias'];
+       switch($field['aggregation']) {
+         case 'count':
+          $formatted_fields[] = "count(" . $field_name . ")" . (empty($field_alias) ? '' : ' ' + $field_alias);
+          break;
+         case 'sum':
+          $formatted_fields[] = "sum(" . $field_name . ")" . (empty($field_alias) ? '' : ' ' + $field_alias);
+          break;
+         default:
+          throw new \Exception("Unknown aggregation type for field $field_name.");
+        }
+      } else {
+        $formatted_fields[] = $field;
+      }
+    }
+    $sql = "SELECT " . implode(",", $formatted_fields) . 
+            " FROM " . $table . 
+    " WHERE " . implode(" AND ", $where_clause) . 
+    (count($order) ? ' ORDER BY ' . implode(",", $order) : '') . 
+    (count($group) ? ' GROUP BY ' . implode(",", $group) : '');
     $sth = $db->prepare($sql);
     $result = $db->execute($sth, $values);
 
