@@ -253,10 +253,10 @@ class DBAdapter implements IAdapter {
        $field_alias = $field['alias'];
        switch($field['aggregation']) {
          case 'count':
-          $formatted_fields[] = "count(" . $field_name . ")" . (empty($field_alias) ? '' : ' ' + $field_alias);
+          $formatted_fields[] = "count(" . $field_name . ")" . (empty($field_alias) ? '' : ' ' . $field_alias);
           break;
          case 'sum':
-          $formatted_fields[] = "sum(" . $field_name . ")" . (empty($field_alias) ? '' : ' ' + $field_alias);
+          $formatted_fields[] = "sum(" . $field_name . ")" . (empty($field_alias) ? '' : ' ' . $field_alias);
           break;
          default:
           throw new \Exception("Unknown aggregation type for field $field_name.");
