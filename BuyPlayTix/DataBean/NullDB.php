@@ -50,6 +50,7 @@ class NullDB extends DB {
   }
   function quote($string)
   {
+    return "'$string'";
   }
   function prepare($sql)
   {
