@@ -267,7 +267,7 @@ class DBAdapter implements IAdapter {
     }
     $sql = "SELECT " . implode(",", $formatted_fields) . 
             " FROM " . $table . 
-    " WHERE " . implode(" AND ", $where_clause) . 
+    (count($where_clause) ? " WHERE " . implode(" AND ", $where_clause) : '') .
     (count($order) ? ' ORDER BY ' . implode(",", $order) : '') . 
     (count($group) ? ' GROUP BY ' . implode(",", $group) : '');
     $sth = $db->prepare($sql);
