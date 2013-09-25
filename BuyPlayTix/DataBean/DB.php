@@ -63,7 +63,7 @@ class DB {
     }
     $this->database = new \PDO(DB::$dsn, DB::$user, DB::$pass, array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'utf8\''));
     $this->database->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-    $this->database->setAttribute(PDO::ATTR_EMULATE_PREPARES, false); 
+    $this->database->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false); 
     $this->database->exec("set names 'utf8'");
     if(DB::$log == null) {
       DB::$log = new NullLogger();
