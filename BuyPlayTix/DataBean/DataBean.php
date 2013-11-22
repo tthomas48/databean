@@ -1,6 +1,6 @@
 <?php
 namespace BuyPlayTix\DataBean;
-class DataBean implements \Iterator
+class DataBean implements \Iterator, \Serializable
 {
     public static $CACHE = true;
     private static $cache = Array();
@@ -369,5 +369,15 @@ class DataBean implements \Iterator
           }
         }
         return $hash;
+    }
+    
+    public function serialize()
+    {
+        return serialize($this->fields);
+    }
+    
+    public function unserialize($data)
+    {
+        $this->fields = unserialize($data);
     }
 }

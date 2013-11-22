@@ -78,4 +78,7 @@ class NullDB extends DB {
   function lastInsertId()
   {
   }
+  public function setTimeZone($tz) {
+      
+  }  
 }
