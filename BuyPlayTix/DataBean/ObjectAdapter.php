@@ -404,7 +404,7 @@ class ObjectAdapter implements IAdapter
         return "('" . implode("','", $param) . "')";
     }
 
-    public function loadDatabase($initializeCallback)
+    public function loadDatabase($initializeCallback = null)
     {
         if (file_exists("/tmp/beans.test.db")) {
             $this->beans = unserialize(file_get_contents("/tmp/beans.test.db"));
@@ -415,7 +415,9 @@ class ObjectAdapter implements IAdapter
         }
         
         if (!file_exists("/tmp/beans.test.db") && !file_exists("/tmp/tables.test.db")) {
-            $initializeCallback();
+            if ($initializeCallback !== null) {
+                $initializeCallback();
+            }
         }
     }
 
@@ -423,6 +425,8 @@ class ObjectAdapter implements IAdapter
     {
         file_put_contents("/tmp/beans.test.db", serialize($this->beans));
         file_put_contents("/tmp/tables.test.db", serialize($this->tables));
+        chmod("/tmp/beans.test.db", 0755);
+        chmod("/tmp/tables.test.db", 0755);
     }
 
     public function clearDatabase()
