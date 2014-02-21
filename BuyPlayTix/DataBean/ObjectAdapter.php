@@ -80,13 +80,27 @@ class ObjectAdapter implements IAdapter
         $clause = preg_replace("/\s*WHERE\s*/i", "", $clause);
         $chunks = preg_split("/\s*AND\s*/i", $clause);
         foreach ($chunks as $chunk) {
+            $where_chunks = preg_split("/\s*!=\s*/i", $chunk);
+            if (count($where_chunks) == 2) {
+                $field = strtoupper(trim($where_chunks[0]));
+                $value = trim($where_chunks[1], ' \'');
+                $where[$field] = array(
+                    "v" => $value,
+                    "condition" => "!="
+                );
+                continue;
+            }
             $where_chunks = preg_split("/\s*=\s*/i", $chunk);
             if (count($where_chunks) == 2) {
                 $field = strtoupper(trim($where_chunks[0]));
                 $value = trim($where_chunks[1], ' \'');
-                $where[$field] = $value;
+                $where[$field] = array(
+                    "v" => $value,
+                    "condition" => "="
+                );
+                continue;
             }
-            $where_chunks = preg_split("/\s*in\s*/i", $chunk);
+            $where_chunks = preg_split("/\s+in\s*/i", $chunk);
             if (count($where_chunks) == 2) {
                 $field = strtoupper(trim($where_chunks[0]));
                 $value = str_replace(')', '', str_replace('(', '', $where_chunks[1]));
@@ -94,26 +108,33 @@ class ObjectAdapter implements IAdapter
                 for ($i = 0; $i < count($values); $i ++) {
                     $values[$i] = trim($values[$i], ' \'');
                 }
-                $where[$field] = $values;
+                $where[$field] = array(
+                    "v" => $values,
+                    "condition" => "="
+                );
+                continue;
             }
         }
         
-        $databeans = Array();
+        $databeans = array();
         $b = $this->beans[get_class($databean)];
         foreach ($b as $bean) {
             $bean_matches = true;
-            foreach ($where as $field => $value) {
+            foreach ($where as $field => $predicate) {
+                $value = $predicate["v"];
+                $condition = $predicate["condition"];
+                
                 if (is_array($value)) {
                     $found_match = false;
                     foreach ($value as $v) {
-                        if ($bean->$field == $v) {
+                        if ($this->isMatch($bean->$field, $condition, $v)) {
                             $found_match = true;
                         }
                     }
                     if (! $found_match) {
                         $bean_matches = false;
                     }
-                } elseif ($bean->$field != $value) {
+                } elseif (!$this->isMatch($bean->$field, $condition, $value)) {
                     $bean_matches = false;
                 }
             }
@@ -122,6 +143,16 @@ class ObjectAdapter implements IAdapter
             }
         }
         return $databeans;
+    }
+    
+    private function isMatch($beanValue, $condition, $value) {
+        if($condition == '=') {
+            return $beanValue == $value;
+        }
+        if($condition == '!=') {
+            return $beanValue != $value;
+        }
+        return false;
     }
 
     function update($databean)
