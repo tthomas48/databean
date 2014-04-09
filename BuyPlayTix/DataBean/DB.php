@@ -77,8 +77,8 @@ class DB {
   }
   public static function shutdown() {
     try {
-      if(DB::$instance->inTransaction()) {
-        DB::$instance->rollback();
+      if(DB::$instance->database->inTransaction()) {
+        DB::$instance->database->rollback();
       }
     } catch(\Exception $e) {
       DB::$log->error($e);
