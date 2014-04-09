@@ -64,9 +64,22 @@ class DB {
     $this->database = new \PDO(DB::$dsn, DB::$user, DB::$pass, array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'utf8\''));
     $this->database->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
     $this->database->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false); 
+    $this->database->setAttribute(\PDO::ATTR_PERSISTENT, true); 
     $this->database->exec("set names 'utf8'");
     if(DB::$log == null) {
       DB::$log = new NullLogger();
+    }
+    register_shutdown_function(array('BuyPlayTix\DataBean\DB', 'shutdown'));
+  }
+  public function disconnect() {
+    $this->database = null;
+    DB::$instance = null;
+  }
+  public static function shutdown() {
+    try {
+      DB::$instance->rollback();
+    } catch(\Exception $e) {
+      DB::$log->error($e);
     }
   }
   public function setTimeZone($tz) {
