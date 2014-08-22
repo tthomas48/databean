@@ -9,18 +9,18 @@ class DBAdapter implements IAdapter {
       if(is_array($param))
       {
         $databean->fields[$param[0]] = $param[1];
-        $databean->setWhereClause('where ' . $param[0] . ' = ' . $db->quote($param[1]));
+        $databean->setWhereClause('where ' . $param[0] . $this->handleNull($param[1]));
       }
       elseif (strlen($param) > 0)
       {
         $databean->fields[$databean->getPk()] = $param;
-        $databean->setWhereClause('where ' . $databean->getPk() . ' = ' . $db->quote($param));
+        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($param));
       }
       else
       {
         $uuid = UUID::get();
         $databean->fields[$databean->getPk()] = $uuid;
-        $databean->setWhereClause('where ' . $databean->getPk() . ' = ' . $db->quote($uuid));
+        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid));
         return;
       }
       $sql = "select *
@@ -34,7 +34,7 @@ class DBAdapter implements IAdapter {
         // we need to make sure a UID is assigned if we don't return a record from the database
         $uuid = UUID::get();
         $databean->fields[$databean->getPk()] = $uuid;
-        $databean->setWhereClause('where ' . $databean->getPk() . ' = ' . $db->quote($uuid));
+        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid));
         $databean->setNew(true);
       }
     }
@@ -49,7 +49,7 @@ class DBAdapter implements IAdapter {
     $databean->setNew(true);
     $uuid = UUID::get();
     $databean->fields[$databean->getPk()] = $uuid;
-    $databean->setWhereClause('where ' . $databean->getPk() . ' = ' . $db->quote($uuid));
+    $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid));
     return $databean;
   }
 
@@ -61,7 +61,7 @@ class DBAdapter implements IAdapter {
       if(strlen($field) > 0)
       {
         if(is_array($param) && count($param) == 1) {
-          $whereClause = ' where ' . $field . ' = ' . $db->quote($param[0]);
+          $whereClause = ' where ' . $field . $this->handleNull($param[0]);
         } else {
           $valList = $this->_parseList($param);
           $whereClause = ' where ' . $field . ' in ' . $valList;
@@ -70,7 +70,7 @@ class DBAdapter implements IAdapter {
       elseif(count($param) > 0 && is_array($param))
       {
         if(is_array($param) && count($param) == 1) {
-          $whereClause = ' where ' . $databean->getPk() . ' = ' . $db->quote($param[0]);
+          $whereClause = ' where ' . $databean->getPk() . $this->handleNull($param[0]);
         } else {
           $valList = $this->_parseList($param);
           $whereClause = ' where ' . $databean->getPk() . ' in ' . $valList;
@@ -109,7 +109,11 @@ class DBAdapter implements IAdapter {
         foreach ($databean->fields as $field => $value)
         {
           $fieldList .= "`$field`" . ",";
-          $valueList .= $db->quote($value) . ",";
+          if($value == null) {
+              $valueList .= "null,";
+          } else {
+            $valueList .= $db->quote($value) . ",";
+          }
         }
         $fieldList = rtrim($fieldList,',');
         $valueList = rtrim($valueList,',');
@@ -123,7 +127,11 @@ class DBAdapter implements IAdapter {
       {
         foreach ($databean->fields as $field => $value)
         {
-          $valueList .= "`$field`" . " = " . $db->quote($value) . ",\n";
+            if($value === null) {
+                $valueList .= "`$field`" . " = null,\n";
+            } else {
+                $valueList .= "`$field`" . " = " . $db->quote($value) . ",\n";
+            }
         }
         $valueList = rtrim($valueList,",\n");
 
@@ -311,4 +319,12 @@ class DBAdapter implements IAdapter {
     }
     return $rows;
   }
+  
+  private function handleNull($param) {
+      $db = DB::getInstance();
+      if ($param === null) {
+          return ' is null ';
+      }
+      return ' = ' . $db->quote($param);
+  }    
 }
