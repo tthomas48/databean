@@ -109,7 +109,7 @@ class DBAdapter implements IAdapter {
         foreach ($databean->fields as $field => $value)
         {
           $fieldList .= "`$field`" . ",";
-          if($value == null) {
+          if($value === null) {
               $valueList .= "null,";
           } else {
             $valueList .= $db->quote($value) . ",";
