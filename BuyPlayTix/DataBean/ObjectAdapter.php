@@ -4,8 +4,6 @@ namespace BuyPlayTix\DataBean;
 class ObjectAdapter implements IAdapter
 {
 
-    private $beans = [];
-
     private $tables = [];
 
     private $queries = [];
@@ -15,31 +13,33 @@ class ObjectAdapter implements IAdapter
 
     function load($databean, $param = "")
     {
-        if (! isset($this->beans[get_class($databean)])) {
-            $this->beans[get_class($databean)] = array();
+        $table = $databean->getTable();
+        $pk = $databean->getPk();
+        if (! array_key_exists($table, $this->tables)) {
+            $this->tables[$table] = [];
         }
-        $b = $this->beans[get_class($databean)];
+        
+        $b = $this->tables[$table];
         
         if (is_array($param)) {
             foreach ($b as $bean) {
-                if ($bean->$param[0] == $param[1]) {
-                    $databean->fields = $bean->fields;
+                if (array_key_exists($param[0], $bean) && $bean[$param[0]] == $param[1]) {
+                    $databean->fields = $bean;
                     $databean->setNew(false);
                     return $databean;
                 }
             }
         } elseif (strlen($param) > 0) {
-            $pk = $databean->getPk();
             foreach ($b as $bean) {
-                if ($bean->$pk == $param) {
-                    $databean->fields = $bean->fields;
+                if (array_key_exists($pk, $bean) && $bean[$pk] == $param) {
+                    $databean->fields = $bean;
                     $databean->setNew(false);
                     return $databean;
                 }
             }
         }
         $uuid = UUID::get();
-        $databean->fields[$databean->getPk()] = $uuid;
+        $databean->fields[$pk] = $uuid;
         $databean->setNew(true);
         return $databean;
     }
@@ -119,7 +119,9 @@ class ObjectAdapter implements IAdapter
         }
         
         $databeans = array();
-        $b = $this->beans[get_class($databean)];
+        $table = $databean->getTable();
+        $pk = $databean->getPk();
+        $b = $this->tables[$table];
         foreach ($b as $bean) {
             $bean_matches = true;
             foreach ($where as $field => $predicate) {
@@ -129,19 +131,21 @@ class ObjectAdapter implements IAdapter
                 if (is_array($value)) {
                     $found_match = false;
                     foreach ($value as $v) {
-                        if ($this->isMatch($bean->$field, $condition, $v)) {
+                        if (array_key_exists($field, $bean) && $this->isMatch($bean[$field], $condition, $v)) {
                             $found_match = true;
                         }
                     }
                     if (! $found_match) {
                         $bean_matches = false;
                     }
-                } elseif (! $this->isMatch($bean->$field, $condition, $value)) {
+                } elseif (!array_key_exists($field, $bean) || ($this->isMatch($bean[$field], $condition, $value) === false)) {
                     $bean_matches = false;
                 }
             }
             if ($bean_matches) {
-                $databeans[] = $bean;
+                $className = get_class($databean);
+                $newBean = new $className($bean[$pk]);
+                $databeans[] = $newBean;
             }
         }
         return $databeans;
@@ -149,34 +153,56 @@ class ObjectAdapter implements IAdapter
 
     private function isMatch($beanValue, $condition, $value)
     {
-        if ($condition == '=') {
-            return $beanValue == $value;
+        if ($condition === '=') {
+            return $beanValue === $value;
         }
-        if ($condition == '!=') {
-            return $beanValue != $value;
+        if ($condition === '!=') {
+            return $beanValue !== $value;
         }
         return false;
     }
 
     function update($databean)
     {
-        if (! isset($this->beans[get_class($databean)])) {
-            $this->beans[get_class($databean)] = array();
+        $table = $databean->getTable();
+        $pk = $databean->getPk();
+        if (! array_key_exists($table, $this->tables)) {
+            $this->tables[$table] = [];
         }
-        $this->beans[get_class($databean)][$this->get_pk_value($databean)] = $databean;
+        
+        $existingRowKey = null;
+        foreach ($this->tables[$table] as $index => $row) {
+            if (array_key_exists($pk, $row) && $row[$pk] === $databean->$pk) {
+                $existingRowKey = $index;
+                break;
+            }
+        }
+        
         $databean->setNew(false);
+        if ($existingRowKey === null) {
+            $this->tables[$table][] = $databean->fields;
+            return $databean;
+        }
+        foreach ($databean->getFields() as $key => $value) {
+            $this->tables[$table][$existingRowKey][$key] = $value;
+        }
         return $databean;
     }
 
     function delete($databean)
     {
-        if (! isset($this->beans[get_class($databean)])) {
-            $this->beans[get_class($databean)] = array();
+        $table = $databean->getTable();
+        $pk = $databean->getPk();
+        if (! array_key_exists($table, $this->tables)) {
+            return $databean;
         }
-        if (isset($this->beans[get_class($databean)][$this->get_pk_value($databean)])) {
-            unset($this->beans[get_class($databean)][$this->get_pk_value($databean)]);
+        
+        foreach ($this->tables[$table] as $index => $row) {
+            if (array_key_exists($pk, $row) && $row[$pk] === $databean->$pk) {
+                unset($this->tables[$table][$index]);
+                return $databean;
+            }
         }
-        return $databean;
     }
 
     private function get_pk_value($databean)
@@ -331,7 +357,7 @@ class ObjectAdapter implements IAdapter
                             switch ($field['aggregation']) {
                                 case 'count':
                                     if (isset($aggregation[$field_alias])) {
-                                        $aggregation[$field_alias] = $aggregation[$field_alias] ++;
+                                        $aggregation[$field_alias] = $aggregation[$field_alias]++;
                                         break;
                                     }
                                     $aggregation[$field_alias] = 1;
@@ -442,10 +468,6 @@ class ObjectAdapter implements IAdapter
 
     public function loadDatabase($initializeCallback = null)
     {
-        if (file_exists("/tmp/beans.test.db")) {
-            $this->beans = unserialize(file_get_contents("/tmp/beans.test.db"));
-        }
-        
         if (file_exists("/tmp/tables.test.db")) {
             $this->tables = unserialize(file_get_contents("/tmp/tables.test.db"));
         }
@@ -454,7 +476,7 @@ class ObjectAdapter implements IAdapter
             $this->queries = unserialize(file_get_contents("/tmp/queries.test.db"));
         }
         
-        if (! file_exists("/tmp/beans.test.db") && ! file_exists("/tmp/tables.test.db") && ! file_exists("/tmp/queries.test.db")) {
+        if (! file_exists("/tmp/tables.test.db") && ! file_exists("/tmp/queries.test.db")) {
             if ($initializeCallback !== null) {
                 $initializeCallback();
             }
@@ -463,12 +485,8 @@ class ObjectAdapter implements IAdapter
 
     public function saveDatabase()
     {
-        file_put_contents("/tmp/beans.test.db", serialize($this->beans));
         file_put_contents("/tmp/tables.test.db", serialize($this->tables));
         file_put_contents("/tmp/queries.test.db", serialize($this->queries));
-        if ((fileperms("/tmp/beans.test.db") & 0777) !== 0766) {
-            chmod("/tmp/beans.test.db", 0766);
-        }
         if ((fileperms("/tmp/tables.test.db") & 0777) !== 0766) {
             chmod("/tmp/tables.test.db", 0766);
         }
@@ -479,16 +497,12 @@ class ObjectAdapter implements IAdapter
 
     public function clearDatabase()
     {
-        if (file_exists("/tmp/beans.test.db")) {
-            unlink("/tmp/beans.test.db");
-        }
         if (file_exists("/tmp/tables.test.db")) {
             unlink("/tmp/tables.test.db");
         }
         if (file_exists("/tmp/queries.test.db")) {
             unlink("/tmp/queries.test.db");
         }
-        $this->beans = [];
         $this->tables = [];
         $this->queries = [];
     }
