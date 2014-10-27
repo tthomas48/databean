@@ -4,9 +4,11 @@ namespace BuyPlayTix\DataBean;
 class ObjectAdapter implements IAdapter
 {
 
-    private $beans = array();
+    private $beans = [];
 
-    private $tables = array();
+    private $tables = [];
+
+    private $queries = [];
 
     public function __construct()
     {}
@@ -134,7 +136,7 @@ class ObjectAdapter implements IAdapter
                     if (! $found_match) {
                         $bean_matches = false;
                     }
-                } elseif (!$this->isMatch($bean->$field, $condition, $value)) {
+                } elseif (! $this->isMatch($bean->$field, $condition, $value)) {
                     $bean_matches = false;
                 }
             }
@@ -144,12 +146,13 @@ class ObjectAdapter implements IAdapter
         }
         return $databeans;
     }
-    
-    private function isMatch($beanValue, $condition, $value) {
-        if($condition == '=') {
+
+    private function isMatch($beanValue, $condition, $value)
+    {
+        if ($condition == '=') {
             return $beanValue == $value;
         }
-        if($condition == '!=') {
+        if ($condition == '!=') {
             return $beanValue != $value;
         }
         return false;
@@ -311,7 +314,9 @@ class ObjectAdapter implements IAdapter
             if ($found_match) {
                 if ($cast_class != NULL) {
                     $class = new \ReflectionClass($cast_class);
-                    $results[] = $class->newInstanceArgs(array($row[$fields[0]]));                    
+                    $results[] = $class->newInstanceArgs(array(
+                        $row[$fields[0]]
+                    ));
                 } else {
                     $ret_row = array();
                     
@@ -415,19 +420,19 @@ class ObjectAdapter implements IAdapter
         }
     }
 
-    private static $named_query_values = array();
-
     public function set_named_query_value($name, $value)
     {
-        ObjectAdapter::$named_query_values[$name] = $value;
+        $this->loadDatabase();
+        $this->queries[$name] = $value;
+        $this->saveDatabase();
     }
 
     function named_query($name, $sql = "", $params = array(), $hash = true)
     {
-        if (! isset(ObjectAdapter::$named_query_values[$name])) {
+        if (! array_key_exists($name, $this->queries)) {
             throw new \Exception("No value set for named query: " . $name);
         }
-        return ObjectAdapter::$named_query_values[$name];
+        return $this->queries[$name];
     }
 
     private function _parseList($param = Array())
@@ -445,7 +450,11 @@ class ObjectAdapter implements IAdapter
             $this->tables = unserialize(file_get_contents("/tmp/tables.test.db"));
         }
         
-        if (!file_exists("/tmp/beans.test.db") && !file_exists("/tmp/tables.test.db")) {
+        if (file_exists("/tmp/queries.test.db")) {
+            $this->queries = unserialize(file_get_contents("/tmp/queries.test.db"));
+        }
+        
+        if (! file_exists("/tmp/beans.test.db") && ! file_exists("/tmp/tables.test.db") && ! file_exists("/tmp/queries.test.db")) {
             if ($initializeCallback !== null) {
                 $initializeCallback();
             }
@@ -456,15 +465,31 @@ class ObjectAdapter implements IAdapter
     {
         file_put_contents("/tmp/beans.test.db", serialize($this->beans));
         file_put_contents("/tmp/tables.test.db", serialize($this->tables));
-        chmod("/tmp/beans.test.db", 0755);
-        chmod("/tmp/tables.test.db", 0755);
+        file_put_contents("/tmp/queries.test.db", serialize($this->queries));
+        if ((fileperms("/tmp/beans.test.db") & 0777) !== 0766) {
+            chmod("/tmp/beans.test.db", 0766);
+        }
+        if ((fileperms("/tmp/tables.test.db") & 0777) !== 0766) {
+            chmod("/tmp/tables.test.db", 0766);
+        }
+        if ((fileperms("/tmp/queries.test.db") & 0777) !== 0766) {
+            chmod("/tmp/queries.test.db", 0766);
+        }
     }
 
     public function clearDatabase()
     {
-        unlink("/tmp/beans.test.db");
-        unlink("/tmp/tables.test.db");
-        $this->beans = array();
-        $this->tables = array();
+        if (file_exists("/tmp/beans.test.db")) {
+            unlink("/tmp/beans.test.db");
+        }
+        if (file_exists("/tmp/tables.test.db")) {
+            unlink("/tmp/tables.test.db");
+        }
+        if (file_exists("/tmp/queries.test.db")) {
+            unlink("/tmp/queries.test.db");
+        }
+        $this->beans = [];
+        $this->tables = [];
+        $this->queries = [];
     }
 }
