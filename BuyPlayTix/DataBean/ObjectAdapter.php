@@ -46,6 +46,7 @@ class ObjectAdapter implements IAdapter
 
     function loadAll($databean, $field = "", $param = "", $andClause = "")
     {
+        
         if (strlen($field) > 0) {
             if (is_array($param) && count($param) == 1) {
                 $whereClause = ' where ' . $field . ' = ' . $param[0];
@@ -166,12 +167,13 @@ class ObjectAdapter implements IAdapter
     {
         $table = $databean->getTable();
         $pk = $databean->getPk();
-        if (! array_key_exists($table, $this->tables)) {
+        if (array_key_exists($table, $this->tables) === false) {
             $this->tables[$table] = [];
         }
-        
+
         $existingRowKey = null;
-        foreach ($this->tables[$table] as $index => $row) {
+        for($index = 0; $index < count($this->tables[$table]); $index++) {
+            $row = $this->tables[$table][$index];
             if (array_key_exists($pk, $row) && $row[$pk] === $databean->$pk) {
                 $existingRowKey = $index;
                 break;
@@ -180,7 +182,7 @@ class ObjectAdapter implements IAdapter
         
         $databean->setNew(false);
         if ($existingRowKey === null) {
-            $this->tables[$table][] = $databean->fields;
+            $this->tables[$table][] = $databean->getFields();
             return $databean;
         }
         foreach ($databean->getFields() as $key => $value) {
@@ -216,7 +218,7 @@ class ObjectAdapter implements IAdapter
 
     function raw_delete($table, $where_fields = array())
     {
-        if (! isset($this->tables[$table])) {
+        if (array_key_exists($table, $this->tables) === false) {
             $this->tables[$table] = array();
         }
         $t = $this->tables[$table];
@@ -290,7 +292,7 @@ class ObjectAdapter implements IAdapter
     // TODO: Add order and grouping, aggregate
     function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL, $order = array(), $group = array())
     {
-        if (! isset($this->tables[$table])) {
+        if (array_key_exists($table, $this->tables) === false) {
             $this->tables[$table] = array();
         }
         $results = array();
@@ -388,7 +390,8 @@ class ObjectAdapter implements IAdapter
 
     function raw_update($table, $fields = array(), $where_fields = array())
     {
-        if (! isset($this->tables[$table])) {
+        if (array_key_exists($table, $this->tables) === false) {
+        
             $this->tables[$table] = array();
         }
         $t = $this->tables[$table];
@@ -464,7 +467,7 @@ class ObjectAdapter implements IAdapter
         return "('" . implode("','", $param) . "')";
     }
 
-    public function loadDatabase($initializeCallback = null)
+    public function loadDatabase()
     {
         if (file_exists("/tmp/tables.test.db")) {
             $this->tables = unserialize(file_get_contents("/tmp/tables.test.db"));
@@ -472,13 +475,7 @@ class ObjectAdapter implements IAdapter
         
         if (file_exists("/tmp/queries.test.db")) {
             $this->queries = unserialize(file_get_contents("/tmp/queries.test.db"));
-        }
-        
-        if (! file_exists("/tmp/tables.test.db") && ! file_exists("/tmp/queries.test.db")) {
-            if ($initializeCallback !== null) {
-                $initializeCallback();
-            }
-        }
+        }        
     }
 
     public function saveDatabase()
@@ -493,15 +490,18 @@ class ObjectAdapter implements IAdapter
         }
     }
 
+    public function printDatabase()
+    {
+      print "Queries: \n";
+      print_r($this->queries);
+      print "Tables: \n";
+      print_r($this->tables);
+    }
+
     public function clearDatabase()
     {
-        if (file_exists("/tmp/tables.test.db")) {
-            unlink("/tmp/tables.test.db");
-        }
-        if (file_exists("/tmp/queries.test.db")) {
-            unlink("/tmp/queries.test.db");
-        }
         $this->tables = [];
         $this->queries = [];
+        $this->saveDatabase();
     }
 }
