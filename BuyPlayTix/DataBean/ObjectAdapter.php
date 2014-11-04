@@ -437,8 +437,8 @@ class ObjectAdapter implements IAdapter
             if ($found_match) {
                 foreach ($row as $row_name => $row_value) {
                     foreach ($fields as $field_name => $field_value) {
-                        if ($row_name == $field_name) {
-                            $row[$row_name] = $field_value;
+                        if ($row_name === $field_name) {
+                            $this->tables[$table][$index][$row_name] = $field_value;
                         }
                     }
                 }
@@ -448,9 +448,7 @@ class ObjectAdapter implements IAdapter
 
     public function set_named_query_value($name, $value)
     {
-        $this->loadDatabase();
         $this->queries[$name] = $value;
-        $this->saveDatabase();
     }
 
     function named_query($name, $sql = "", $params = array(), $hash = true)
