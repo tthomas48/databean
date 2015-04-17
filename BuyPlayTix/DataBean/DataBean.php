@@ -12,13 +12,6 @@ class DataBean implements \Iterator
     public $fields = Array();
     
     /**
-     * associate array containing descriptions of fields in the database
-     * @access private
-     * @var array
-     */
-    public static $field_defs = Array();
-        
-    /**
      * name of the primary key of this table,
      * @access private
      * @var string

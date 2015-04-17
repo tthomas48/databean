@@ -129,6 +129,43 @@ class BuilderTask extends Task {
                 $output .= "namespace BuyPlayTix\DataBean\Builder;\n";
                 $output .= "trait " . strtolower($table) . "_trait { \n\n";
 
+                $output .= "public static \$field_defs = [\n";
+                foreach($fields as $field) {
+                  $val = [];
+                  $val['db-type'] = $field["Type"];
+                  $val['type'] = 'unknown';
+                  if($field["Field"] === 'UID') {
+                    $val['type'] = 'pk';
+                  }
+                  elseif(strpos($field["Field"], '_UID') !== false) {
+                    $val['type'] = 'fk';
+                    $val['join'] = str_replace('_UID', '', $field["Field"]) . "S";
+                  }
+                  elseif(strpos($val['db-type'], 'varchar') !== false || strpos($val['db-type'], 'char') !== false) {
+                    $val['type'] = 'text';
+                  }
+                  elseif(strpos($val['db-type'], 'text') !== false) {
+                    $val['type'] = 'text';
+                  }
+                  elseif(strpos($val['db-type'], 'decimal') !== false || strpos($val['db-type'], 'int') !== false) {
+                    $val['type'] = 'number';
+                  }
+                  elseif(strpos($val['db-type'], 'enum') !== false) {
+                    $val['type'] = 'enum';
+                    $val['values'] = explode('\',\'', str_replace('enum(\'', '', str_replace('\')', '', $val['db-type'])));
+                  }
+                  elseif(strpos($val['db-type'], 'blob') !== false) {
+                    $val['type'] = 'unsupported';
+                  }
+                  elseif(strpos($val['db-type'], 'timestamp') !== false || strpos($val['db-type'], 'date') !== false) {
+                    $val['type'] = 'timestamp';
+                  }
+
+                  $output .= "'" . $field["Field"] . "' => " . var_export($val, true) . ",\n";
+                }
+                $output .= "];\n";
+
+
                 foreach($fields as $field) {
 			$output .= "    public function get_" . strtolower($field["Field"]) . "() {\n";
 			$output .= "        return \$this->" . $field["Field"] . ";\n";
