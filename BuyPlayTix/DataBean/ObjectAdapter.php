@@ -375,7 +375,11 @@ class ObjectAdapter implements IAdapter
                                     throw new \Exception("Unknown aggregation type for field $field_name.");
                             }
                         } else {
-                            $ret_row[$field] = $row[$field];
+                            if (array_key_exists($field, $row)) {
+                              $ret_row[$field] = $row[$field];
+                            } else {
+                              $ret_row[$field] = null;
+                            }
                         }
                     }
                     foreach ($aggregation as $field_name => $field_value) {
