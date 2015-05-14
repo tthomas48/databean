@@ -71,6 +71,9 @@ class DB {
     }
     register_shutdown_function(array('BuyPlayTix\DataBean\DB', 'shutdown'));
   }
+  public function getPDO() {
+    return $this->database;
+  }
   public function disconnect() {
     $this->database = null;
     DB::$instance = null;
