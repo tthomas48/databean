@@ -143,10 +143,15 @@ class DBAdapter implements IAdapter
         }
     }
 
-    private function _parseList($param = Array())
+    private function _parseList($params = Array())
     {
         $db = DB::getInstance();
-        return "(" . implode(",", $db->quote($param)) . ")";
+        
+        $quotedParams = [];
+        foreach($params as $param) {
+            $quotedParams[] = $db->quote($param);
+        }
+        return "(" . implode(",", $quotedParams) . ")";
     }
 
     function raw_delete($table, $fields = array())
@@ -230,11 +235,11 @@ class DBAdapter implements IAdapter
             $value = $v;
             if (is_array($v)) {
                 $condition = $v['condition'];
+                $value = $v['value'];
                 if ($condition === 'in') {
                     $value = $this->_parseList($value);
                     $where_clause[] = $name . " in " . $value . " ";
                 } else {
-                    $value = $v['value'];
                     $where_clause[] = $name . " $condition ? ";
                     $values[] = $value;
                 }
