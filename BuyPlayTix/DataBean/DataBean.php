@@ -184,6 +184,10 @@ class DataBean implements \Iterator
     }
     function __get($key)
     {
+        $methodName = "get_" . strtolower($key);
+        if (method_exists($this, $methodName)) {
+            return $this->$methodName();
+        }
         if(isset($this->fields[$key])) {
             return $this->fields[$key];
         }
@@ -211,6 +215,10 @@ class DataBean implements \Iterator
     }
     function __set($key, $value)
     {
+        $methodName = "set_" . strtolower($key);
+        if (method_exists($this, $methodName)) {
+            return $this->$methodName($value);
+        }        
         $this->fields[$key] = $value;
     }
 
