@@ -184,7 +184,7 @@ class BuilderTask extends Task
             $output .= "    }\n\n";
             
             $output .= "    public function set_" . strtolower($field["Field"]) . "(\$v) {\n";
-            $output .= "        \$this->" . $field["Field"] . " = \$v;\n";
+            $output .= "        \$this->fields[\"" . $field["Field"] . "\"] = \$v;\n";
             $output .= "    }\n\n";
         }
         $output .= "}\n";
