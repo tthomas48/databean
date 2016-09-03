@@ -233,19 +233,31 @@ class DBAdapter implements IAdapter
         foreach ($where_fields as $name => $v) {
             $condition = '=';
             $value = $v;
+            $static = false;
             if (is_array($v)) {
+              if (array_key_exists('condition', $v)) {
                 $condition = $v['condition'];
+              }
+              if (array_key_exists('value', $v)) {
                 $value = $v['value'];
+              }
+              if (array_key_exists('static', $v)) {
+                $static = $v['static'];
+              }
                 if ($condition === 'in') {
                     $value = $this->_parseList($value);
                     $where_clause[] = $name . " in " . $value . " ";
                 } else {
-                    $where_clause[] = $name . " $condition ? ";
-                    $values[] = $value;
+                    $where_clause[] = $name . " $condition " . ($static ? ' ' . $value . ' ' : ' ? ');
+                    if (!$static) {
+                      $values[] = $value;
+                    }
                 }
             } else {
-                $where_clause[] = $name . " $condition ? ";
-                $values[] = $value;
+                $where_clause[] = $name . " $condition " . ($static ? ' ' . $value . ' ' : ' ? ');
+                if (!$static) {
+                  $values[] = $value;
+                }
             }
         }
         $formatted_fields = array();
