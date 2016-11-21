@@ -207,7 +207,7 @@ class DBAdapter implements IAdapter
             $set_clause[] = $name . " = ? ";
             $values[] = $value;
         }
-        $where_clause = "";
+        $where_clause = [];
         foreach ($where_fields as $name => $v) {
             $condition = '=';
             $value = $v;
