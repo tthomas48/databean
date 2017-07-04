@@ -157,23 +157,21 @@ class DBAdapter implements IAdapter
     function raw_delete($table, $fields = array())
     {
         $db = DB::getInstance();
-        
-        $restrictions = array();
+
+        $where_clause = array();
         $values = array();
         foreach ($fields as $name => $v) {
-            $condition = '=';
-            $value = $v;
-            if (is_array($v)) {
-                $condition = $v['condition'];
-                $value = $v['value'];
-            }
-            $restrictions[] = $name . " $condition ? ";
+          $where_clause[] = $this->getWhereClause($name, $v);
+          $value = $this->getWhereValue($v);
+          if ($value !== null) {
             $values[] = $value;
+          }
         }
-        
+
         $sql = "delete
     from " . $table . "
-    where " . implode(" AND ", $restrictions);
+    where " . implode(" AND ", $where_clause);
+
         $sth = $db->prepare($sql);
         return $db->execute($sth, $values);
     }
@@ -209,19 +207,66 @@ class DBAdapter implements IAdapter
         }
         $where_clause = [];
         foreach ($where_fields as $name => $v) {
-            $condition = '=';
-            $value = $v;
-            if (is_array($v)) {
-                $condition = $v['condition'];
-                $value = $v['value'];
-            }
-            $where_clause[] = $name . " $condition ? ";
+          $where_clause[] = $this->getWhereClause($name, $v);
+          $value = $this->getWhereValue($v);
+          if ($value !== null) {
             $values[] = $value;
+          }
         }
         
         $sql = "update " . $table . " set " . implode(",", $set_clause) . " where " . implode(" AND ", $where_clause);
         $sth = $db->prepare($sql);
         return $db->execute($sth, $values);
+    }
+
+    private function getWhereClause($name, $v) {
+      $condition = '=';
+      $value = $v;
+      $static = false;
+      if (is_array($v)) {
+        if (array_key_exists('condition', $v)) {
+          $condition = $v['condition'];
+        }
+        if (array_key_exists('value', $v)) {
+          $value = $v['value'];
+        }
+        if (array_key_exists('static', $v)) {
+          $static = $v['static'];
+        }
+        if ($condition === 'in') {
+          return $name . " in " . $value . " ";
+        } else {
+          return $name . " $condition " . ($static ? ' ' . $value . ' ' : ' ? ');
+        }
+      }
+      return $name . " $condition " . ($static ? ' ' . $value . ' ' : ' ? ');
+    }
+
+    private function getWhereValue($v) {
+      $condition = '=';
+      $value = $v;
+      $static = false;
+      if (is_array($v)) {
+        if (array_key_exists('condition', $v)) {
+          $condition = $v['condition'];
+        }
+        if (array_key_exists('value', $v)) {
+          $value = $v['value'];
+        }
+        if (array_key_exists('static', $v)) {
+          $static = $v['static'];
+        }
+        if ($condition === 'in') {
+          return $this->_parseList($value);
+        }
+        if (!$static) {
+          return $value;
+        }
+      }
+      if (!$static) {
+        return $value;
+      }
+      return null;
     }
 
     function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL, $order = array(), $group = array())
@@ -231,34 +276,11 @@ class DBAdapter implements IAdapter
         $values = array();
         $where_clause = array();
         foreach ($where_fields as $name => $v) {
-            $condition = '=';
-            $value = $v;
-            $static = false;
-            if (is_array($v)) {
-              if (array_key_exists('condition', $v)) {
-                $condition = $v['condition'];
-              }
-              if (array_key_exists('value', $v)) {
-                $value = $v['value'];
-              }
-              if (array_key_exists('static', $v)) {
-                $static = $v['static'];
-              }
-                if ($condition === 'in') {
-                    $value = $this->_parseList($value);
-                    $where_clause[] = $name . " in " . $value . " ";
-                } else {
-                    $where_clause[] = $name . " $condition " . ($static ? ' ' . $value . ' ' : ' ? ');
-                    if (!$static) {
-                      $values[] = $value;
-                    }
-                }
-            } else {
-                $where_clause[] = $name . " $condition " . ($static ? ' ' . $value . ' ' : ' ? ');
-                if (!$static) {
-                  $values[] = $value;
-                }
-            }
+          $where_clause[] = $this->getWhereClause($name, $v);
+          $value = $this->getWhereValue($v);
+          if ($value !== null) {
+            $values[] = $value;
+          }
         }
         $formatted_fields = array();
         foreach ($fields as $field) {
@@ -280,6 +302,8 @@ class DBAdapter implements IAdapter
             }
         }
         $sql = "SELECT " . implode(",", $formatted_fields) . " FROM " . $table . (count($where_clause) ? " WHERE " . implode(" AND ", $where_clause) : '') . (count($order) ? ' ORDER BY ' . implode(",", $order) : '') . (count($group) ? ' GROUP BY ' . implode(",", $group) : '');
+
+
         $sth = $db->prepare($sql);
         $result = $db->execute($sth, $values);
         
