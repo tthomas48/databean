@@ -162,10 +162,7 @@ class DBAdapter implements IAdapter
         $values = array();
         foreach ($fields as $name => $v) {
           $where_clause[] = $this->getWhereClause($name, $v);
-          $value = $this->getWhereValue($v);
-          if ($value !== null) {
-            $values[] = $value;
-          }
+          $this->getWhereValue($values, $v);
         }
 
         $sql = "delete
@@ -208,10 +205,7 @@ class DBAdapter implements IAdapter
         $where_clause = [];
         foreach ($where_fields as $name => $v) {
           $where_clause[] = $this->getWhereClause($name, $v);
-          $value = $this->getWhereValue($v);
-          if ($value !== null) {
-            $values[] = $value;
-          }
+          $this->getWhereValue($values, $v);
         }
         
         $sql = "update " . $table . " set " . implode(",", $set_clause) . " where " . implode(" AND ", $where_clause);
@@ -242,7 +236,7 @@ class DBAdapter implements IAdapter
       return $name . " $condition " . ($static ? ' ' . $value . ' ' : ' ? ');
     }
 
-    private function getWhereValue($v) {
+    private function getWhereValue(&$values, $v) {
       $condition = '=';
       $value = $v;
       $static = false;
@@ -257,16 +251,15 @@ class DBAdapter implements IAdapter
           $static = $v['static'];
         }
         if ($condition === 'in') {
-          return $this->_parseList($value);
+          $values[] = $this->_parseList($value);
         }
         if (!$static) {
-          return $value;
+          $values[] = $value;
         }
       }
       if (!$static) {
-        return $value;
+        $values[] = $value;
       }
-      return null;
     }
 
     function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL, $order = array(), $group = array())
@@ -277,10 +270,7 @@ class DBAdapter implements IAdapter
         $where_clause = array();
         foreach ($where_fields as $name => $v) {
           $where_clause[] = $this->getWhereClause($name, $v);
-          $value = $this->getWhereValue($v);
-          if ($value !== null) {
-            $values[] = $value;
-          }
+          $this->getWhereValue($values, $v);
         }
         $formatted_fields = array();
         foreach ($fields as $field) {
