@@ -4,6 +4,8 @@ namespace BuyPlayTix\DataBean;
 class ObjectAdapter implements IAdapter
 {
 
+  public static $DB_DIR;
+
     private $tables = [];
 
     private $queries = [];
@@ -46,7 +48,7 @@ class ObjectAdapter implements IAdapter
 
     function loadAll($databean, $field = "", $param = "", $andClause = "")
     {
-        
+
         if (strlen($field) > 0) {
             if (is_array($param) && count($param) == 1) {
                 $whereClause = ' where ' . $field . ' = ' . $param[0];
@@ -473,24 +475,24 @@ class ObjectAdapter implements IAdapter
 
     public function loadDatabase()
     {
-        if (file_exists("/tmp/tables.test.db")) {
-            $this->tables = unserialize(file_get_contents("/tmp/tables.test.db"));
+        if (file_exists(ObjectAdapter::$DB_DIR . "tables.test.db")) {
+            $this->tables = unserialize(file_get_contents(ObjectAdapter::$DB_DIR . "tables.test.db"));
         }
         
-        if (file_exists("/tmp/queries.test.db")) {
-            $this->queries = unserialize(file_get_contents("/tmp/queries.test.db"));
-        }        
+        if (file_exists(ObjectAdapter::$DB_DIR .  "queries.test.db")) {
+            $this->queries = unserialize(file_get_contents(ObjectAdapter::$DB_DIR . "queries.test.db"));
+        }
     }
 
     public function saveDatabase()
     {
-        file_put_contents("/tmp/tables.test.db", serialize($this->tables));
-        file_put_contents("/tmp/queries.test.db", serialize($this->queries));
-        if ((fileperms("/tmp/tables.test.db") & 0777) !== 0766) {
-            chmod("/tmp/tables.test.db", 0766);
+        file_put_contents(ObjectAdapter::$DB_DIR . "tables.test.db", serialize($this->tables));
+        file_put_contents(ObjectAdapter::$DB_DIR . "queries.test.db", serialize($this->queries));
+        if ((fileperms(ObjectAdapter::$DB_DIR . "tables.test.db") & 0777) !== 0766) {
+            chmod(ObjectAdapter::$DB_DIR . "tables.test.db", 0766);
         }
-        if ((fileperms("/tmp/queries.test.db") & 0777) !== 0766) {
-            chmod("/tmp/queries.test.db", 0766);
+        if ((fileperms(ObjectAdapter::$DB_DIR . "queries.test.db") & 0777) !== 0766) {
+            chmod(ObjectAdapter::$DB_DIR . "queries.test.db", 0766);
         }
     }
 
