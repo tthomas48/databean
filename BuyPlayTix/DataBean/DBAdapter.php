@@ -228,7 +228,7 @@ class DBAdapter implements IAdapter
           $static = $v['static'];
         }
         if ($condition === 'in') {
-          return $name . " in " . $value . " ";
+          return $name . " in " . $this->_parseList($value) . " ";
         } else {
           return $name . " $condition " . ($static ? ' ' . $value . ' ' : ' ? ');
         }
@@ -251,13 +251,13 @@ class DBAdapter implements IAdapter
           $static = $v['static'];
         }
         if ($condition === 'in') {
-          $values[] = $this->_parseList($value);
+          // skip it
         }
-        if (!$static) {
+        else if (!$static) {
           $values[] = $value;
         }
       }
-      if (!$static) {
+      else if (!$static) {
         $values[] = $value;
       }
     }
@@ -292,7 +292,6 @@ class DBAdapter implements IAdapter
             }
         }
         $sql = "SELECT " . implode(",", $formatted_fields) . " FROM " . $table . (count($where_clause) ? " WHERE " . implode(" AND ", $where_clause) : '') . (count($order) ? ' ORDER BY ' . implode(",", $order) : '') . (count($group) ? ' GROUP BY ' . implode(",", $group) : '');
-
 
         $sth = $db->prepare($sql);
         $result = $db->execute($sth, $values);
