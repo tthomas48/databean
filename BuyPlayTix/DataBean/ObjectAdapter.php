@@ -291,6 +291,33 @@ class ObjectAdapter implements IAdapter
         }
         $this->tables[$table][] = $fields;
     }
+
+    function raw_replace($table, $fields = []) {
+
+      if (! isset($this->tables[$table])) {
+        return $this->raw_insert($table, $fields);
+      }
+      $pk = "UID";
+      if (array_key_exists("ID", $fields)) {
+        $pk = "ID";
+      }
+      $foundRow = false;
+      $t = $this->tables[$table];
+      foreach ($t as $index => $row) {
+        if ($row[$pk] === $fields[$pk]) {
+
+          $foundRow = true;
+          foreach($fields as $key => $value) {
+            $row[$key] = $value;
+          }
+        }
+      }
+      if (!$foundRow) {
+        return $this->raw_insert($table, $fields);
+      }
+    }
+
+
     // TODO: Add order and grouping, aggregate
     function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL, $order = array(), $group = array())
     {
