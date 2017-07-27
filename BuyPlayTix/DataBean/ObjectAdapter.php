@@ -304,11 +304,12 @@ class ObjectAdapter implements IAdapter
       $foundRow = false;
       $t = $this->tables[$table];
       foreach ($t as $index => $row) {
+
         if ($row[$pk] === $fields[$pk]) {
 
           $foundRow = true;
           foreach($fields as $key => $value) {
-            $row[$key] = $value;
+            $this->tables[$table][$index][$key] = $value;
           }
         }
       }
@@ -513,8 +514,8 @@ class ObjectAdapter implements IAdapter
 
     public function saveDatabase()
     {
-        file_put_contents(ObjectAdapter::$DB_DIR . "tables.test.db", serialize($this->tables));
-        file_put_contents(ObjectAdapter::$DB_DIR . "queries.test.db", serialize($this->queries));
+        file_put_contents(ObjectAdapter::$DB_DIR . "tables.test.db", serialize($this->tables), LOCK_EX);
+        file_put_contents(ObjectAdapter::$DB_DIR . "queries.test.db", serialize($this->queries), LOCK_EX);
         if ((fileperms(ObjectAdapter::$DB_DIR . "tables.test.db") & 0777) !== 0766) {
             chmod(ObjectAdapter::$DB_DIR . "tables.test.db", 0766);
         }
