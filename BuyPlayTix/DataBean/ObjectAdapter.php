@@ -503,12 +503,21 @@ class ObjectAdapter implements IAdapter
 
     public function loadDatabase()
     {
+
         if (file_exists(ObjectAdapter::$DB_DIR . "tables.test.db")) {
-            $this->tables = unserialize(file_get_contents(ObjectAdapter::$DB_DIR . "tables.test.db"));
+          $lock = fopen(ObjectAdapter::$DB_DIR . "tables.test.db", 'rb');
+          @flock($lock, LOCK_SH);
+          $this->tables = unserialize(file_get_contents(ObjectAdapter::$DB_DIR . "tables.test.db"));
+          @flock($lock, LOCK_UN);
+          fclose($lock);
         }
         
         if (file_exists(ObjectAdapter::$DB_DIR .  "queries.test.db")) {
-            $this->queries = unserialize(file_get_contents(ObjectAdapter::$DB_DIR . "queries.test.db"));
+          $lock = fopen(ObjectAdapter::$DB_DIR . "queries.test.db", 'rb');
+          @flock($lock, LOCK_SH);
+          $this->queries = unserialize(file_get_contents(ObjectAdapter::$DB_DIR . "queries.test.db"));
+          @flock($lock, LOCK_UN);
+          fclose($lock);
         }
     }
 
