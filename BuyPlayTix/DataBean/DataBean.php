@@ -86,20 +86,20 @@ class DataBean implements \Iterator
     }
 
 
-    private static function load($pk) {
+    private static function load($table, $pk) {
         if(!DataBean::$CACHE) {
 	    return false;
         }
 
         $pk = trim($pk);
-        if(empty($pk) || !array_key_exists($pk, DataBean::$cache)) {
+        if(empty($pk) || !array_key_exists($pk, DataBean::$cache) ||  DataBean::$cache[$pk]->table !== $table) {
             return false;
         }
         return DataBean::$cache[$pk];
     }
     
     public function diff() {
-    	$cached_version = Databean::load($this->fields[$this->pk]);
+    	$cached_version = Databean::load($this->table, $this->fields[$this->pk]);
     	if(!$cached_version) {
     		return "";
     	}
@@ -130,7 +130,7 @@ class DataBean implements \Iterator
         }
         #include_once 'BuyPlayTix/DataBean/Builder/' . strtolower($this->table) . ".php";
 
-        if(!$reload && !is_array($param) && ($databean = DataBean::load($param)) !== false) {
+        if(!$reload && !is_array($param) && ($databean = DataBean::load($this->table, $param)) !== false) {
             $this->fields = $databean->fields;
             $this->new = $databean->new;
             $this->whereClause = $databean->whereClause;
