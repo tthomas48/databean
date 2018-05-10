@@ -22,7 +22,7 @@ class ObjectAdapter implements IAdapter
         }
         
         $b = $this->tables[$table];
-        
+
         if (is_array($param)) {
             foreach ($b as $bean) {
                 if (array_key_exists($param[0], $bean) && $bean[$param[0]] == $param[1]) {
@@ -56,7 +56,7 @@ class ObjectAdapter implements IAdapter
                 $valList = $this->_parseList($param);
                 $whereClause = ' where ' . $field . ' in ' . $valList;
             }
-        } elseif (count($param) > 0 && is_array($param)) {
+        } elseif (is_array($param) && count($param) > 0) {
             if (is_array($param) && count($param) == 1) {
                 $whereClause = ' where ' . $databean->getPk() . ' = ' . $param[0];
             } else {

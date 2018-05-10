@@ -76,30 +76,30 @@ class DataBean implements \Iterator
         }
         $pk = $object->pk;
         if(!empty($object->$pk)) {
-            DataBean::$cache[$object->$pk] = $object;
+            DataBean::$cache[$object->table . '~' . $object->$pk] = $object;
         }
     }
 
     private static function uncache($object) {
         $pk = $object->pk;
-        unset(DataBean::$cache[$object->$pk]);
+        unset(DataBean::$cache[$object->table . '~' . $object->$pk]);
     }
 
 
-    private static function load($pk) {
+    private static function load($table, $pk) {
         if(!DataBean::$CACHE) {
 	    return false;
         }
 
         $pk = trim($pk);
-        if(empty($pk) || !array_key_exists($pk, DataBean::$cache)) {
+        if(empty($pk) || !array_key_exists($table . '~' . $pk, DataBean::$cache)) {
             return false;
         }
-        return DataBean::$cache[$pk];
+        return DataBean::$cache[$table . '~' . $pk];
     }
     
     public function diff() {
-    	$cached_version = Databean::load($this->fields[$this->pk]);
+    	$cached_version = Databean::load($this->table, $this->fields[$this->pk]);
     	if(!$cached_version) {
     		return "";
     	}
@@ -130,7 +130,7 @@ class DataBean implements \Iterator
         }
         #include_once 'BuyPlayTix/DataBean/Builder/' . strtolower($this->table) . ".php";
 
-        if(!$reload && !is_array($param) && ($databean = DataBean::load($param)) !== false) {
+        if(!$reload && !is_array($param) && ($databean = DataBean::load($this->table, $param)) !== false) {
             $this->fields = $databean->fields;
             $this->new = $databean->new;
             $this->whereClause = $databean->whereClause;
