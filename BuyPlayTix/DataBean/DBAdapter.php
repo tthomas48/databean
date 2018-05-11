@@ -65,7 +65,7 @@ class DBAdapter implements IAdapter
           $valList = $this->_parseList($param);
           $whereClause = ' where ' . $field . ' in ' . $valList;
         }
-      } elseif (count($param) > 0 && is_array($param)) {
+      } elseif (is_array($param) && count($param) > 0) {
         if (is_array($param) && count($param) == 1) {
           $whereClause = ' where ' . $databean->getPk() . $this->handleNull($param[0]);
         } else {
