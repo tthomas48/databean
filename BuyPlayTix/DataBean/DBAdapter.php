@@ -41,6 +41,14 @@ class DBAdapter implements IAdapter
     }
   }
 
+  function hydrate($databean, $fields)
+  {
+    $databean->fields = $fields;
+    $databean->setNew(false);
+    $uuid = $fields[$databean->getPk()];
+    $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid));
+  }
+
   function duplicate($databean)
   {
     $db = DB::getInstance($databean->connectionString);
@@ -76,13 +84,15 @@ class DBAdapter implements IAdapter
         $whereClause = "";
       }
 
-      $sql = "select " . $databean->getPk() . "
+      $sql = "select * 
       from " . $databean->getTable() . " " . $whereClause . " " . $andClause;
       $result = $db->query($sql);
       $databeans = Array();
-      while ($row = $db->fetchArray($result)) {
+      while ($row = $db->fetchAssocArray($result)) {
         $classname = get_class($databean);
-        $databeans[] = new $classname($row[0]);
+        $d = new $classname();
+        $this->hydrate($d, $row);
+        $databeans[] = $d;
       }
       return $databeans;
     } catch (\Exception $e) {
