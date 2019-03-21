@@ -120,7 +120,7 @@ class ObjectAdapter implements IAdapter
                 continue;
             }
         }
-        
+
         $databeans = array();
         $table = $databean->getTable();
         $pk = $databean->getPk();
@@ -221,15 +221,20 @@ class ObjectAdapter implements IAdapter
     function raw_delete($table, $where_fields = array())
     {
         if (array_key_exists($table, $this->tables) === false) {
-            $this->tables[$table] = array();
+            $this->tables[$table] = [];
+            return;
         }
         $t = $this->tables[$table];
         foreach ($t as $index => $row) {
             $found_match = false;
             foreach ($where_fields as $name => $v) {
+                // print $row[$name] . "\n";
+                // $v = 1, $row[$name] = 2
                 $value = $v;
                 if (is_array($v)) {
-                    switch ($v['condition']) {
+                    $condition = $v['condition'];
+                    $value = $v['value'];
+                    switch ($condition) {
                         case '<>':
                         case '!=':
                             if ($row[$name] == $value) {
@@ -258,18 +263,15 @@ class ObjectAdapter implements IAdapter
                             }
                             break;
                     }
-                    $condition = $v['condition'];
-                    $value = $v['value'];
-                } else {
-                    if ($row[$name] != $value) {
-                        $found_match = true;
-                    }
+                } elseif ($row[$name] === $value) {
+                    $found_match = true;
                 }
             }
             if ($found_match) {
                 unset($t[$index]);
             }
         }
+        $this->tables[$table] = $t;
     }
 
     function raw_insert($table, $fields = array())
@@ -332,7 +334,9 @@ class ObjectAdapter implements IAdapter
             foreach ($where_fields as $name => $v) {
                 $value = $v;
                 if (is_array($v)) {
-                    switch ($v['condition']) {
+                    $condition = $v['condition'];
+                    $value = $v['value'];
+                    switch ($condition) {
                         case '<>':
                         case '!=':
                             if ($row[$name] == $value) {
@@ -361,10 +365,8 @@ class ObjectAdapter implements IAdapter
                             }
                             break;
                     }
-                    $condition = $v['condition'];
-                    $value = $v['value'];
                 } else {
-                    if ($row[$name] != $value) {
+                    if (!array_key_exists($name, $row) || $row[$name] != $value) {
                         $found_match = false;
                     }
                 }
