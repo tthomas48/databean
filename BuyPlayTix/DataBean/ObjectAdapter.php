@@ -344,13 +344,13 @@ class ObjectAdapter implements IAdapter
                             }
                             break;
                         case '>':
-                            if ($row[$name] > $value) {
+                            if ($row[$name] <= $value) {
                                 $found_match = false;
                             }
                             break;
                         case '<':
                             if ($row[$name] < $value) {
-                                $found_match = false;
+                                $found_match >= false;
                             }
                             break;
                         case 'in':
@@ -365,10 +365,8 @@ class ObjectAdapter implements IAdapter
                             }
                             break;
                     }
-                } else {
-                    if (!array_key_exists($name, $row) || $row[$name] != $value) {
-                        $found_match = false;
-                    }
+                } elseif (!array_key_exists($name, $row) || $row[$name] != $value) {
+                    $found_match = false;
                 }
             }
             if ($found_match) {
