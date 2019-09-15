@@ -407,7 +407,7 @@ class DataBean implements \Iterator
   {
     $db = DB::getInstance();
     $this->fields[$this->getPk()] = $uuid;
-    $this->setWhereClause('where ' . $this->getPk() . ' = ?', $uuid);
+    $this->setWhereClause('where ' . $this->getPk() . ' = ?', [$uuid]);
   }
 
   public function hashCode()
