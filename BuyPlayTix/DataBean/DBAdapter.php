@@ -10,30 +10,42 @@ class DBAdapter implements IAdapter
     try {
       $db = DB::getInstance($databean->connectionString);
 
+      $params = [];
       if (is_array($param)) {
         $databean->fields[$param[0]] = $param[1];
-        $databean->setWhereClause('where ' . $param[0] . $this->handleNull($param[1]));
+        $this->handleNullParam($params, $param[1]);
+        $databean->setWhereClause('where ' . $param[0] . $this->handleNull($param[1]), $params);
+
       } elseif (strlen($param) > 0) {
         $databean->fields[$databean->getPk()] = $param;
-        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($param));
+        $this->handleNullParam($params, $param);
+        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($param), $params);
       } else {
         $uuid = UUID::get();
         $databean->fields[$databean->getPk()] = $uuid;
-        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid));
+        $this->handleNullParam($params, $uuid);
+        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid), $params);
         return;
       }
-      $sql = "select *
-      from " . $databean->getTable() . " " . $databean->getWhereClause();
-      $sth = $db->query($sql);
+      $sql = "select * from " . $databean->getTable() . " " . $databean->getWhereClause();
+      $sth = $db->prepare($sql);
+      $db->execute($sth, $databean->getWhereParams());
 
-      if ($db->numRows($sth) > 0) {
-        $databean->fields = $db->fetchAssocArray($sth);
+      $params = [];
+      $fields = $db->fetchAssocArray($sth);
+      if ($fields !== false) {
+
+        $databean->fields = $fields;
+        $uuid = $fields[$databean->getPk()];
+        $this->handleNullParam($params, $uuid);
+        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid), $params);
         $databean->setNew(false);
       } else {
         // we need to make sure a UID is assigned if we don't return a record from the database
         $uuid = UUID::get();
         $databean->fields[$databean->getPk()] = $uuid;
-        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid));
+        $this->handleNullParam($params, $uuid);
+        $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid), $params);
         $databean->setNew(true);
       }
     } catch (\Exception $e) {
@@ -46,7 +58,9 @@ class DBAdapter implements IAdapter
     $databean->fields = $fields;
     $databean->setNew(false);
     $uuid = $fields[$databean->getPk()];
-    $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid));
+    $params = [];
+    $this->handleNullParam($params, $uuid);
+    $databean->setWhereClause('where ' . $databean->getPk() . $this->handleNull($uuid), $params);
   }
 
   function duplicate($databean)
@@ -63,32 +77,46 @@ class DBAdapter implements IAdapter
   function loadAll($databean, $field = "", $param = "", $andClause = "")
   {
     $sql = "";
+    $params = [];
     try {
       $db = DB::getInstance($databean->connectionString);
 
       if (strlen($field) > 0) {
         if (is_array($param) && count($param) == 1) {
           $whereClause = ' where ' . $field . $this->handleNull($param[0]);
+          $this->handleNullParam($params, $param[0]);
         } else {
           $valList = $this->_parseList($param);
+          $params = $param;
           $whereClause = ' where ' . $field . ' in ' . $valList;
         }
       } elseif (is_array($param) && count($param) > 0) {
         if (is_array($param) && count($param) == 1) {
           $whereClause = ' where ' . $databean->getPk() . $this->handleNull($param[0]);
+          $this->handleNullParam($params, $param[0]);
         } else {
           $valList = $this->_parseList($param);
+          $params = $param;
           $whereClause = ' where ' . $databean->getPk() . ' in ' . $valList;
         }
       } else {
         $whereClause = "";
       }
 
-      $sql = "select * 
-      from " . $databean->getTable() . " " . $whereClause . " " . $andClause;
-      $result = $db->query($sql);
+      $andSql = $andClause;
+      if (is_array($andClause) && count($andSql) == 2) {
+        $andSql = $andClause[0];
+        if (!is_array($andClause[1])) {
+          $andClause[1] = [$andClause[1]];
+        }
+        $params = array_merge($params, $andClause[1]);
+      }
+
+      $sql = "select * from " . $databean->getTable() . " " . trim($whereClause) . " " . trim($andSql);
+      $sth = $db->prepare(trim($sql));
+      $sth->execute($params);
       $databeans = Array();
-      while ($row = $db->fetchAssocArray($result)) {
+      while ($row = $db->fetchAssocArray($sth)) {
         $classname = get_class($databean);
         $d = new $classname();
         $this->hydrate($d, $row);
@@ -105,35 +133,41 @@ class DBAdapter implements IAdapter
     try {
       $db = DB::getInstance($databean->connectionString);
 
-      $fieldList = "";
-      $valueList = "";
+      $fields = [];
+      $replacements = [];
+      $values = [];
       if ($databean->isNew()) {
         foreach ($databean->fields as $field => $value) {
-          $fieldList .= "`$field`" . ",";
+          $fields[] = "`$field`";
           if ($value === null) {
-            $valueList .= "null,";
+            $replacements[] = "null";
           } else {
-            $valueList .= $db->quote($value) . ",";
+            $replacements[] = "?";
+            $values[] = $value;
           }
         }
-        $fieldList = rtrim($fieldList, ',');
-        $valueList = rtrim($valueList, ',');
 
-        $sql = "insert into " . $databean->getTable() . " " . "(" . $fieldList . ") " . "values (" . $valueList . ")";
+        $sql = "insert into " . $databean->getTable() . " " . "(" . implode($fields, ",") . ") " . "values (" . implode($replacements, ",") . ")";
         $databean->setNew(false);
       } else {
         foreach ($databean->fields as $field => $value) {
           if ($value === null) {
-            $valueList .= "`$field`" . " = null,\n";
+            $fields[] = "`$field`";
+            $replacements[] = "null";
           } else {
-            $valueList .= "`$field`" . " = " . $db->quote($value) . ",\n";
+            $fields[] = "`$field`";
+            $replacements[] = "?";
+            $values[] = $value;
           }
         }
-        $valueList = rtrim($valueList, ",\n");
-
-        $sql = " update " . $databean->getTable() . " " . " set " . $valueList . " " . $databean->getWhereClause();
+        $valueList = [];
+        for($i = 0; $i < count($fields); $i++) {
+          $valueList[] = $fields[$i] . " = " . $replacements[$i];
+        }
+        $sql = "update " . $databean->getTable() . " set " . implode($valueList, ",") . " " . $databean->getWhereClause();
+        $values = array_merge($values, $databean->getWhereParams());
       }
-      return $db->executeSql($sql);
+      return $db->executeSql($sql, $values);
     } catch (\Exception $e) {
       throw new Exception("Unable to update object: " . $e);
     }
@@ -143,12 +177,13 @@ class DBAdapter implements IAdapter
   {
     try {
       $db = DB::getInstance($databean->connectionString);
+      if (array_key_exists($databean->getPk(), $databean->fields) === false) {
+        throw new Exception("no primary key specified for databean");
+      }
 
-      $sql = "delete
-      from " . $databean->getTable() . "
-      where " . $databean->getPk() . " = " . $db->quote($databean->fields[$databean->getPk()]);
-
-      return $db->query($sql);
+      $sql = sprintf("delete from %s where %s = ?", $databean->getTable(), $databean->getPk());
+      $sth = $db->prepare($sql);
+      return $db->execute($sth, $databean->fields[$databean->getPk()]);
     } catch (\Exception $e) {
       throw new Exception("Unable to delete object: " . $e);
     }
@@ -160,7 +195,7 @@ class DBAdapter implements IAdapter
 
     $quotedParams = [];
     foreach ($params as $param) {
-      $quotedParams[] = $db->quote($param);
+      $quotedParams[] = '?';
     }
     return "(" . implode(",", $quotedParams) . ")";
   }
@@ -278,16 +313,26 @@ class DBAdapter implements IAdapter
       }
       if ($condition === 'in') {
         // skip it
-      } else if (!$static) {
+      } else {
+        if (!$static) {
+          $values[] = $value;
+        }
+      }
+    } else {
+      if (!$static) {
         $values[] = $value;
       }
-    } else if (!$static) {
-      $values[] = $value;
     }
   }
 
-  function raw_select($table, $fields = array(), $where_fields = array(), $cast_class = NULL, $order = array(), $group = array())
-  {
+  function raw_select(
+    $table,
+    $fields = array(),
+    $where_fields = array(),
+    $cast_class = null,
+    $order = array(),
+    $group = array()
+  ) {
     $db = DB::getInstance();
 
     $values = array();
@@ -315,13 +360,16 @@ class DBAdapter implements IAdapter
         $formatted_fields[] = $field;
       }
     }
-    $sql = "SELECT " . implode(",", $formatted_fields) . " FROM " . $table . (count($where_clause) ? " WHERE " . implode(" AND ", $where_clause) : '') . (count($order) ? ' ORDER BY ' . implode(",", $order) : '') . (count($group) ? ' GROUP BY ' . implode(",", $group) : '');
+    $sql = "SELECT " . implode(",",
+        $formatted_fields) . " FROM " . $table . (count($where_clause) ? " WHERE " . implode(" AND ",
+          $where_clause) : '') . (count($order) ? ' ORDER BY ' . implode(",",
+          $order) : '') . (count($group) ? ' GROUP BY ' . implode(",", $group) : '');
 
     $sth = $db->prepare($sql);
     $result = $db->execute($sth, $values);
 
     $results = array();
-    if ($cast_class != NULL) {
+    if ($cast_class != null) {
       while ($row = $db->fetchArray($sth)) {
         $results[] = new $cast_class($row[0]);
       }
@@ -339,7 +387,7 @@ class DBAdapter implements IAdapter
   {
     $db = DB::getInstance();
 
-    $sth = NULL;
+    $sth = null;
     if (isset($statement_cache[$name])) {
       $sth = $statement_cache[$name];
     } else {
@@ -365,6 +413,13 @@ class DBAdapter implements IAdapter
     if ($param === null) {
       return ' is null ';
     }
-    return ' = ' . $db->quote($param);
+    return ' = ?';
+  }
+  private function handleNullParam(&$params, $param)
+  {
+    if ($param === null) {
+      return;
+    }
+    $params[] = $param;
   }
 }
