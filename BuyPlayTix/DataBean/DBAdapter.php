@@ -183,7 +183,7 @@ class DBAdapter implements IAdapter
 
       $sql = sprintf("delete from %s where %s = ?", $databean->getTable(), $databean->getPk());
       $sth = $db->prepare($sql);
-      return $db->execute($sth, $databean->fields[$databean->getPk()]);
+      return $db->execute($sth, [$databean->fields[$databean->getPk()]]);
     } catch (\Exception $e) {
       throw new Exception("Unable to delete object: " . $e);
     }
@@ -312,7 +312,7 @@ class DBAdapter implements IAdapter
         $static = $v['static'];
       }
       if ($condition === 'in') {
-        // skip it
+        $values = array_merge($values, $value);
       } else {
         if (!$static) {
           $values[] = $value;
